@@ -15,10 +15,10 @@ This repository contains analysis code for this project on the Open Science Fram
 
 For idiographic VAR models run in Mplus on 10/6/24:
 
-- `/raw/varfit.RDS`
 - `/raw/mplus_var/` outputs
   - 53 DAT files, 53 INP files, and 53 OUT files (one of each type per participant)
   - `Mplus Run Models.txt`
+- `/raw/varfit.RDS`
 
 #### From `04_extract_temporal_results.R`
 

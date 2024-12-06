@@ -1,2 +1,2 @@
 # ttt-perturbation
-Analysis scripts for manuscript "Evaluating Idiographic Networks of Depression Symptoms for Multiple Equilibria: A Perturbation Analysis"
+This repository contains analysis code for this project on the Open Science Framework: https://osf.io/rqej3/.

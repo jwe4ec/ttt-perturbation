@@ -69,11 +69,84 @@ sort(unlist(lapply(thres_adj_mats_var, function(x) sum(x != 0))))
 
 
 
-# TODO: For few sig edges, is it the same edge across participants? Look into
-# how many edges are shared across partcipants (homo vs. heterogeneity)
 
+# Determine number of participants for which each edge is significant
 
+thres_adj_mats_var_sig_edges <- lapply(thres_adj_mats_var, function(x) (x != 0))
 
+thres_adj_mats_var_sig_freq <- Reduce("+", thres_adj_mats_var_sig_edges)
+
+range(thres_adj_mats_var_sig_freq) == c(0, 8)
+
+# Determine percentage of participants for which each edge is significant
+
+n <- length(thres_adj_mats_var)
+
+thres_adj_mats_var_sig_incl_perc <- round((thres_adj_mats_var_sig_freq / n) * 100, 1)
+
+range(thres_adj_mats_var_sig_incl_perc) == c(0.0, 15.1)
+
+# Show number (and percentage) of participants for which each edge is significant
+
+thres_adj_mats_var_sig_freq_incl_perc <- thres_adj_mats_var_sig_freq
+thres_adj_mats_var_sig_freq_incl_perc[, ] <- NA
+
+for (i in 1:nrow(thres_adj_mats_var_sig_freq_incl_perc)) {
+  for (j in 1:ncol(thres_adj_mats_var_sig_freq_incl_perc)) {
+    thres_adj_mats_var_sig_freq_incl_perc[i, j] <- paste0(thres_adj_mats_var_sig_freq[i, j],
+                                                          " (",
+                                                          format(thres_adj_mats_var_sig_incl_perc[i, j], 
+                                                                 nsmall = 1, trim = TRUE),
+                                                          ")")
+  }
+}
+
+thres_adj_mats_var_sig_freq_incl_perc
+
+# Determine range of significant edge weights across participants
+
+thres_adj_mats_var_ever_sig <- thres_adj_mats_var_sig_freq > 0
+
+thres_adj_mats_var_sig_range <- thres_adj_mats_var_ever_sig
+thres_adj_mats_var_sig_range[, ] <- NA
+
+for (i in 1:nrow(thres_adj_mats_var_sig_range)) {
+  for (j in 1:ncol(thres_adj_mats_var_sig_range)) {
+    if (thres_adj_mats_var_ever_sig[i, j] == TRUE) {
+      # Obtain significant edge weights
+      
+      element_values <- sapply(thres_adj_mats_var, function(x) x[i, j])
+      
+      element_values <- element_values[element_values != 0]
+      
+      # Compute range of significant edge weights
+      
+      range <- format(round(range(element_values), 2),
+                      nsmall = 2, trim = TRUE)
+      
+      thres_adj_mats_var_sig_range[i, j] <- paste(range, collapse = ", ")
+    }
+  }
+}
+
+thres_adj_mats_var_sig_range
+
+# Show number of participants for which each edge is significant along with
+# range of significant edges
+
+thres_adj_mats_var_sig_freq_range <- thres_adj_mats_var_sig_freq
+thres_adj_mats_var_sig_freq_range[, ] <- NA
+
+for (i in 1:nrow(thres_adj_mats_var_sig_freq_range)) {
+  for (j in 1:ncol(thres_adj_mats_var_sig_freq_range)) {
+    thres_adj_mats_var_sig_freq_range[i, j] <- paste0(thres_adj_mats_var_sig_freq[i, j],
+                                                      " (",
+                                                      thres_adj_mats_var_sig_range[i, j], 
+                                                      ")")
+  }
+}
+
+thres_adj_mats_var_sig_freq_range
 
 # ---------------------------------------------------------------------------- #
 # Plot temporal networks ----

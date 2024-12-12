@@ -501,8 +501,13 @@ pred_326177_400_max_bad_d   <- compute_pred(adj_mat_326177, 400,
 
 # Define function to plot predicted (blue) and observed (black) values
 
-plot_pred_obs <- function(pred_df, obs_df) {
+plot_pred_obs <- function(pred_df, obs_df, plot_title) {
   obs_df$t <- 1:nrow(obs_df)
+  
+  plot_name <- deparse(substitute(pred_df))
+  plot_title <- plot_title
+
+  pdf(paste0("./results/pred_values/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
   
@@ -524,6 +529,8 @@ plot_pred_obs <- function(pred_df, obs_df) {
        xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
   points(obs_df$t, obs_df$focus_d)
   
+  mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  
   plot(pred_df$t, pred_df$fun_pred,      main = "Inaction",  
        xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
   points(obs_df$t, obs_df$fun_d)
@@ -540,18 +547,24 @@ plot_pred_obs <- function(pred_df, obs_df) {
        xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
   points(obs_df$t, obs_df$sad_d)
   
+  mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  
   par(mfrow = c(1, 1))
+  
+  dev.off()
 }
 
 # Run function
 
-plot_pred_obs(pred_326177_study_bl, data_326177)
+dir.create("./results/pred_values/")
 
-plot_pred_obs(pred_326177_400_bl, data_326177)
-plot_pred_obs(pred_326177_4000_bl, data_326177)
+plot_pred_obs(pred_326177_study_bl, data_326177, "Through Study Period Starting From Obs. Baseline Values (ID 326177)")
 
-plot_pred_obs(pred_326177_study_max_bad_d, data_326177)
-plot_pred_obs(pred_326177_400_max_bad_d, data_326177)
+plot_pred_obs(pred_326177_400_bl, data_326177,  "Through 400 Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_4000_bl, data_326177, "Through 4000 Starting From Obs. Baseline Values (ID 326177)")
+
+plot_pred_obs(pred_326177_study_max_bad_d, data_326177, 'Through Study Period Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_bad_d, data_326177,   'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
 
 
 

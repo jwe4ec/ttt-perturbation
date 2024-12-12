@@ -382,9 +382,7 @@ plot(data_326177$bin_no_adj, data_326177$sad_d)
 # Define function to compute predicted values over desired time points from adjacency 
 # matrix and desired starting values
 
-compute_pred <- function(adj_mat, n_timepoints,
-                         start_bad, start_control, start_energy, start_focus,
-                         start_fun, start_interest, start_movement, start_sad) {
+compute_pred <- function(adj_mat, n_timepoints, start_list) {
   init_vec      <- rep(NA, n_timepoints)
   
   bad_pred      <- init_vec
@@ -398,14 +396,14 @@ compute_pred <- function(adj_mat, n_timepoints,
   
   for (i in 1:n_timepoints) {
     if (i == 1) {
-      bad_pred[i]      <- start_bad
-      control_pred[i]  <- start_control
-      energy_pred[i]   <- start_energy
-      focus_pred[i]    <- start_focus
-      fun_pred[i]      <- start_fun
-      interest_pred[i] <- start_interest
-      movement_pred[i] <- start_movement
-      sad_pred[i]      <- start_sad
+      bad_pred[i]      <- start_list$bad
+      control_pred[i]  <- start_list$control
+      energy_pred[i]   <- start_list$energy
+      focus_pred[i]    <- start_list$focus
+      fun_pred[i]      <- start_list$fun
+      interest_pred[i] <- start_list$interest
+      movement_pred[i] <- start_list$movement
+      sad_pred[i]      <- start_list$sad
     } else if (i > 1) {
       bad_l1      <- bad_pred[i - 1]
       control_l1  <- control_pred[i - 1]
@@ -445,49 +443,37 @@ compute_pred <- function(adj_mat, n_timepoints,
 
 n_study_timepoints <- nrow(data_326177)
 
-start_bl_bad_d      <- data_326177[1, "bad_d"]
-start_bl_control_d  <- data_326177[1, "control_d"]
-start_bl_energy_d   <- data_326177[1, "energy_d"]
-start_bl_focus_d    <- data_326177[1, "focus_d"]
-start_bl_fun_d      <- data_326177[1, "fun_d"]
-start_bl_interest_d <- data_326177[1, "interest_d"]
-start_bl_movement_d <- data_326177[1, "movement_d"]
-start_bl_sad_d      <- data_326177[1, "sad_d"]
+start_list_bl <- list(bad      = data_326177[1, "bad_d"],
+                      control  = data_326177[1, "control_d"],
+                      energy   = data_326177[1, "energy_d"],
+                      focus    = data_326177[1, "focus_d"],
+                      fun      = data_326177[1, "fun_d"],
+                      interest = data_326177[1, "interest_d"],
+                      movement = data_326177[1, "movement_d"],
+                      sad      = data_326177[1, "sad_d"])
 
-pred_326177_study_bl <- compute_pred(adj_mat_326177, n_study_timepoints, 
-                                     start_bl_bad_d, start_bl_control_d, start_bl_energy_d, start_bl_focus_d, 
-                                     start_bl_fun_d, start_bl_interest_d, start_bl_movement_d, start_bl_sad_d)
+pred_326177_study_bl <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_bl)
 
 # Compute predicted values for "326177" into future starting from baseline
 
-pred_326177_400_bl   <- compute_pred(adj_mat_326177, 400,
-                                     start_bl_bad_d, start_bl_control_d, start_bl_energy_d, start_bl_focus_d,
-                                     start_bl_fun_d, start_bl_interest_d, start_bl_movement_d, start_bl_sad_d)
-pred_326177_4000_bl  <- compute_pred(adj_mat_326177, 4000,
-                                     start_bl_bad_d, start_bl_control_d, start_bl_energy_d, start_bl_focus_d,
-                                     start_bl_fun_d, start_bl_interest_d, start_bl_movement_d, start_bl_sad_d)
-pred_326177_40000_bl <- compute_pred(adj_mat_326177, 40000,
-                                     start_bl_bad_d, start_bl_control_d, start_bl_energy_d, start_bl_focus_d,
-                                     start_bl_fun_d, start_bl_interest_d, start_bl_movement_d, start_bl_sad_d)
+pred_326177_400_bl   <- compute_pred(adj_mat_326177, 400,   start_list_bl)
+pred_326177_4000_bl  <- compute_pred(adj_mat_326177, 4000,  start_list_bl)
+pred_326177_40000_bl <- compute_pred(adj_mat_326177, 40000, start_list_bl)
 
 # Compute predicted values for "326177" starting from 0 for all nodes except one
 
-start_max_bad_d    <- max(data_326177["bad"], na.rm = TRUE) # max = 77
-start_0_control_d  <- 0
-start_0_energy_d   <- 0
-start_0_focus_d    <- 0
-start_0_fun_d      <- 0
-start_0_interest_d <- 0
-start_0_movement_d <- 0
-start_0_sad_d      <- 0
+start_list_max_bad_0_others <- list(bad      = max(data_326177["bad"], na.rm = TRUE), # max = 77
+                                    control  = 0,
+                                    energy   = 0,
+                                    focus    = 0,
+                                    fun      = 0,
+                                    interest = 0,
+                                    movement = 0,
+                                    sad      = 0)
 
-pred_326177_study_max_bad_d <- compute_pred(adj_mat_326177, n_study_timepoints, 
-                                            start_max_bad_d, start_0_control_d, start_0_energy_d, start_0_focus_d, 
-                                            start_0_fun_d, start_0_interest_d, start_0_movement_d, start_0_sad_d)
+pred_326177_study_max_bad_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_bad_0_others)
 
-pred_326177_400_max_bad_d   <- compute_pred(adj_mat_326177, 400, 
-                                            start_max_bad_d, start_0_control_d, start_0_energy_d, start_0_focus_d, 
-                                            start_0_fun_d, start_0_interest_d, start_0_movement_d, start_0_sad_d)
+pred_326177_400_max_bad_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_bad_0_others)
 
 # TODO: Continue for other variables (but consider better code)
 
@@ -511,40 +497,44 @@ plot_pred_obs <- function(pred_df, obs_df, plot_title) {
   
   par(mfrow = c(2, 2))
   
+  xlab <- "Time"
+  ylab <- "Detrended Value"
   col_pred <- "green"
+  pch <- 16
+  ylim <- c(-100, 100)
   
   plot(pred_df$t, pred_df$bad_pred,      main = "Bad Self",
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$bad_d)
   
   plot(pred_df$t, pred_df$control_pred,  main = "Lack Control",
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$control_d)
   
   plot(pred_df$t, pred_df$energy_pred,   main = "Fatigue",
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$energy_d)
   
   plot(pred_df$t, pred_df$focus_pred,    main = "Lack Focus",
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$focus_d)
   
   mtext(plot_title, side = 3, line = -1, outer = TRUE)
   
   plot(pred_df$t, pred_df$fun_pred,      main = "Inaction",  
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$fun_d)
   
   plot(pred_df$t, pred_df$interest_pred, main = "Lack Interest",
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$interest_d)
   
   plot(pred_df$t, pred_df$movement_pred, main = "Slower or Fidgety",
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$movement_d)
   
   plot(pred_df$t, pred_df$sad_pred,      main = "Sad", 
-       xlab = "Time", ylab = "Detrended Value", col = col_pred, pch = 16, ylim = c(-100, 100))
+       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
   points(obs_df$t, obs_df$sad_d)
   
   mtext(plot_title, side = 3, line = -1, outer = TRUE)
@@ -558,13 +548,13 @@ plot_pred_obs <- function(pred_df, obs_df, plot_title) {
 
 dir.create("./results/pred_values/")
 
-plot_pred_obs(pred_326177_study_bl, data_326177, "Through Study Period Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_study_bl,        data_326177, "Through Study Starting From Obs. Baseline Values (ID 326177)")
 
-plot_pred_obs(pred_326177_400_bl, data_326177,  "Through 400 Starting From Obs. Baseline Values (ID 326177)")
-plot_pred_obs(pred_326177_4000_bl, data_326177, "Through 4000 Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_400_bl,          data_326177, "Through 400 Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_4000_bl,         data_326177, "Through 4000 Starting From Obs. Baseline Values (ID 326177)")
 
-plot_pred_obs(pred_326177_study_max_bad_d, data_326177, 'Through Study Period Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_bad_d, data_326177,   'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_bad_d, data_326177, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_bad_d,   data_326177, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
 
 
 

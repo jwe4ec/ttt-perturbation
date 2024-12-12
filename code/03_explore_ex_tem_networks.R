@@ -462,20 +462,48 @@ pred_326177_40000_bl <- compute_pred(adj_mat_326177, 40000, start_list_bl)
 
 # Compute predicted values for "326177" starting from 0 for all nodes except one
 
-start_list_max_bad_0_others <- list(bad      = max(data_326177["bad"], na.rm = TRUE), # max = 77
-                                    control  = 0,
-                                    energy   = 0,
-                                    focus    = 0,
-                                    fun      = 0,
-                                    interest = 0,
-                                    movement = 0,
-                                    sad      = 0)
+  # Create list of starting values
 
-pred_326177_study_max_bad_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_bad_0_others)
+vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
 
-pred_326177_400_max_bad_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_bad_0_others)
+start_list_max_one_0_others_element <- vector("list", length = length(vars))
+names(start_list_max_one_0_others_element) <- vars
+start_list_max_one_0_others_element[ ] <- 0
 
-# TODO: Continue for other variables (but consider better code)
+start_list_max_one_0_others <- vector("list", length = length(vars))
+names(start_list_max_one_0_others) <- paste0("max_", vars)
+start_list_max_one_0_others[ ] <- list(start_list_max_one_0_others_element)
+
+start_list_max_one_0_others$max_bad$bad           <- max(data_326177["bad"],      na.rm = TRUE) # max = 77
+start_list_max_one_0_others$max_control$control   <- max(data_326177["control"],  na.rm = TRUE) # max = 61
+start_list_max_one_0_others$max_energy$energy     <- max(data_326177["energy"],   na.rm = TRUE) # max = 100
+start_list_max_one_0_others$max_focus$focus       <- max(data_326177["focus"],    na.rm = TRUE) # max = 99
+start_list_max_one_0_others$max_fun$fun           <- max(data_326177["fun"],      na.rm = TRUE) # max = 100
+start_list_max_one_0_others$max_interest$interest <- max(data_326177["interest"], na.rm = TRUE) # max = 83
+start_list_max_one_0_others$max_movement$movement <- max(data_326177["movement"], na.rm = TRUE) # max = 100
+start_list_max_one_0_others$max_sad$sad           <- max(data_326177["sad"],      na.rm = TRUE) # max = 45
+
+  # Compute predicted values
+
+pred_326177_study_max_bad_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_bad)
+pred_326177_study_max_control_d  <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_control)
+pred_326177_study_max_energy_d   <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_energy)
+pred_326177_study_max_focus_d    <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_focus)
+pred_326177_study_max_fun_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_fun)
+pred_326177_study_max_interest_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_interest)
+pred_326177_study_max_movement_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_movement)
+pred_326177_study_max_sad_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_sad)
+
+pred_326177_400_max_bad_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_bad)
+pred_326177_400_max_control_d    <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_control)
+pred_326177_400_max_energy_d     <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_energy)
+pred_326177_400_max_focus_d      <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_focus)
+pred_326177_400_max_fun_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_fun)
+pred_326177_400_max_interest_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_interest)
+pred_326177_400_max_movement_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_movement)
+pred_326177_400_max_sad_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_sad)
+
+# TODO: Repeat for other example participants
 
 
 
@@ -548,6 +576,8 @@ plot_pred_obs <- function(pred_df, obs_df, plot_title) {
 
 dir.create("./results/pred_values/")
 
+# TODO: Expand for all predicted values above
+
 plot_pred_obs(pred_326177_study_bl,        data_326177, "Through Study Starting From Obs. Baseline Values (ID 326177)")
 
 plot_pred_obs(pred_326177_400_bl,          data_326177, "Through 400 Starting From Obs. Baseline Values (ID 326177)")
@@ -555,6 +585,12 @@ plot_pred_obs(pred_326177_4000_bl,         data_326177, "Through 4000 Starting F
 
 plot_pred_obs(pred_326177_study_max_bad_d, data_326177, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
 plot_pred_obs(pred_326177_400_max_bad_d,   data_326177, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
+
+
+
+
+
+# TODO: Repeat for other example participants
 
 
 

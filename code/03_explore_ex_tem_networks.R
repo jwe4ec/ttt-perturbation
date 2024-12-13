@@ -471,37 +471,37 @@ names(start_list_max_one_0_others_element) <- vars
 start_list_max_one_0_others_element[ ] <- 0
 
 start_list_max_one_0_others <- vector("list", length = length(vars))
-names(start_list_max_one_0_others) <- paste0("max_", vars)
+names(start_list_max_one_0_others) <- paste0("max_", vars, "_d")
 start_list_max_one_0_others[ ] <- list(start_list_max_one_0_others_element)
 
-start_list_max_one_0_others$max_bad$bad           <- max(data_326177["bad"],      na.rm = TRUE) # max = 77
-start_list_max_one_0_others$max_control$control   <- max(data_326177["control"],  na.rm = TRUE) # max = 61
-start_list_max_one_0_others$max_energy$energy     <- max(data_326177["energy"],   na.rm = TRUE) # max = 100
-start_list_max_one_0_others$max_focus$focus       <- max(data_326177["focus"],    na.rm = TRUE) # max = 99
-start_list_max_one_0_others$max_fun$fun           <- max(data_326177["fun"],      na.rm = TRUE) # max = 100
-start_list_max_one_0_others$max_interest$interest <- max(data_326177["interest"], na.rm = TRUE) # max = 83
-start_list_max_one_0_others$max_movement$movement <- max(data_326177["movement"], na.rm = TRUE) # max = 100
-start_list_max_one_0_others$max_sad$sad           <- max(data_326177["sad"],      na.rm = TRUE) # max = 45
+start_list_max_one_0_others$max_bad_d$bad           <- max(data_326177["bad_d"],      na.rm = TRUE)
+start_list_max_one_0_others$max_control_d$control   <- max(data_326177["control_d"],  na.rm = TRUE)
+start_list_max_one_0_others$max_energy_d$energy     <- max(data_326177["energy_d"],   na.rm = TRUE)
+start_list_max_one_0_others$max_focus_d$focus       <- max(data_326177["focus_d"],    na.rm = TRUE)
+start_list_max_one_0_others$max_fun_d$fun           <- max(data_326177["fun_d"],      na.rm = TRUE)
+start_list_max_one_0_others$max_interest_d$interest <- max(data_326177["interest_d"], na.rm = TRUE)
+start_list_max_one_0_others$max_movement_d$movement <- max(data_326177["movement_d"], na.rm = TRUE)
+start_list_max_one_0_others$max_sad_d$sad           <- max(data_326177["sad_d"],      na.rm = TRUE)
 
   # Compute predicted values
 
-pred_326177_study_max_bad_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_bad)
-pred_326177_study_max_control_d  <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_control)
-pred_326177_study_max_energy_d   <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_energy)
-pred_326177_study_max_focus_d    <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_focus)
-pred_326177_study_max_fun_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_fun)
-pred_326177_study_max_interest_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_interest)
-pred_326177_study_max_movement_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_movement)
-pred_326177_study_max_sad_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_sad)
+pred_326177_study_max_bad_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_bad_d)
+pred_326177_study_max_control_d  <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_control_d)
+pred_326177_study_max_energy_d   <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_energy_d)
+pred_326177_study_max_focus_d    <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_focus_d)
+pred_326177_study_max_fun_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_fun_d)
+pred_326177_study_max_interest_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_interest_d)
+pred_326177_study_max_movement_d <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_movement_d)
+pred_326177_study_max_sad_d      <- compute_pred(adj_mat_326177, n_study_timepoints, start_list_max_one_0_others$max_sad_d)
 
-pred_326177_400_max_bad_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_bad)
-pred_326177_400_max_control_d    <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_control)
-pred_326177_400_max_energy_d     <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_energy)
-pred_326177_400_max_focus_d      <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_focus)
-pred_326177_400_max_fun_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_fun)
-pred_326177_400_max_interest_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_interest)
-pred_326177_400_max_movement_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_movement)
-pred_326177_400_max_sad_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_sad)
+pred_326177_400_max_bad_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_bad_d)
+pred_326177_400_max_control_d    <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_control_d)
+pred_326177_400_max_energy_d     <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_energy_d)
+pred_326177_400_max_focus_d      <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_focus_d)
+pred_326177_400_max_fun_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_fun_d)
+pred_326177_400_max_interest_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_interest_d)
+pred_326177_400_max_movement_d   <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_movement_d)
+pred_326177_400_max_sad_d        <- compute_pred(adj_mat_326177, 400,                start_list_max_one_0_others$max_sad_d)
 
 # TODO: Repeat for other example participants
 
@@ -576,19 +576,28 @@ plot_pred_obs <- function(pred_df, obs_df, plot_title) {
 
 dir.create("./results/pred_values/")
 
-# TODO: Expand for all predicted values above
+plot_pred_obs(pred_326177_study_bl,             data_326177, "Through Study Starting From Obs. Baseline Values (ID 326177)")
 
-plot_pred_obs(pred_326177_study_bl,        data_326177, "Through Study Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_400_bl,               data_326177, "Through 400 Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_4000_bl,              data_326177, "Through 4000 Starting From Obs. Baseline Values (ID 326177)")
 
-plot_pred_obs(pred_326177_400_bl,          data_326177, "Through 400 Starting From Obs. Baseline Values (ID 326177)")
-plot_pred_obs(pred_326177_4000_bl,         data_326177, "Through 4000 Starting From Obs. Baseline Values (ID 326177)")
+plot_pred_obs(pred_326177_study_max_bad_d,      data_326177, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_control_d,  data_326177, 'Through Study Starting From Max "Lack Control" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_energy_d,   data_326177, 'Through Study Starting From Max "Fatigue" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_focus_d,    data_326177, 'Through Study Starting From Max "Lack Focus" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_fun_d,      data_326177, 'Through Study Starting From Max "Inaction" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_interest_d, data_326177, 'Through Study Starting From Max "Lack Interest" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_movement_d, data_326177, 'Through Study Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_study_max_sad_d,      data_326177, 'Through Study Starting From Max "Sad" and 0 Otherwise (ID 326177)')
 
-plot_pred_obs(pred_326177_study_max_bad_d, data_326177, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_bad_d,   data_326177, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
-
-
-
-
+plot_pred_obs(pred_326177_400_max_bad_d,        data_326177, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_control_d,    data_326177, 'Through 400 Starting From Max "Lack Control" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_energy_d,     data_326177, 'Through 400 Starting From Max "Fatigue" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_focus_d,      data_326177, 'Through 400 Starting From Max "Lack Focus" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_fun_d,        data_326177, 'Through 400 Starting From Max "Inaction" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_interest_d,   data_326177, 'Through 400 Starting From Max "Lack Interest" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_movement_d,   data_326177, 'Through 400 Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 326177)')
+plot_pred_obs(pred_326177_400_max_sad_d,        data_326177, 'Through 400 Starting From Max "Sad" and 0 Otherwise (ID 326177)')
 
 # TODO: Repeat for other example participants
 

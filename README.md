@@ -25,7 +25,6 @@ For idiographic VAR models run in Mplus on 10/6/24:
 For idiographic VAR model results extracted on 10/28/24:
 
 - `/extracted/results_var.RDS`
-- `/extracted/thres_adj_mats_var.RDS`
 
 ## Code
 

@@ -46,11 +46,12 @@ extracted_results_path <- "./results/from_ttt-p1-main-analysis/extracted/"
 
 load(paste0(extracted_results_path, "results_var.RDS"))
 
-# TODO: Adjacency matrices for temporal results from idiographic VAR models
+# Adjacency matrices for temporal results from idiographic VAR models
 
+adj_mats_path <- "./results/adj_mats/"
 
-
-
+load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
+load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
 
 # TODO: Redo analyses below using saturated adjacency matrices
 

@@ -26,9 +26,11 @@ source("./code/01_define_functions.R")
 
 groundhog_day <- version_control()
 
-# Load package
+# Load package and set seed
 
 groundhog.library("qgraph", groundhog_day)
+
+set.seed(1234)
 
 # ---------------------------------------------------------------------------- #
 # Import data and selected results ----
@@ -51,9 +53,15 @@ load(paste0(extracted_results_path, "thres_adj_mats_var.RDS"))
 
 # Most participants have few significant edges
 
-table(unlist(lapply(thres_adj_mats_var, function(x) sum(x != 0))))
+n_sig_edges <- unlist(lapply(thres_adj_mats_var, function(x) sum(x != 0)))
 
-hist(unlist(lapply(thres_adj_mats_var, function(x) sum(x != 0))),
+mean(n_sig_edges)   # 3.51
+median(n_sig_edges) # 3
+sd(n_sig_edges)     # 3.15
+
+table(n_sig_edges)
+
+hist(n_sig_edges,
      breaks = 21, right = FALSE,
      main = "Distribution of Significant Edges",
      xlab = "Number of Significant Edges",
@@ -62,13 +70,27 @@ hist(unlist(lapply(thres_adj_mats_var, function(x) sum(x != 0))),
 
 # Order of participants by number of significant edges
 
-sort(unlist(lapply(thres_adj_mats_var, function(x) sum(x != 0))))
+sort(n_sig_edges)
 
-# TODO: Sample across number of sig. edges
+# Randomly select example participants with (a) 1 and (b) 3-4 significant edges.
+# Example participant with 10 significant edges was manually chosen.
 
+low_sig_edges_ids <- names(n_sig_edges[n_sig_edges == 1])
+med_sig_edges_ids <- names(n_sig_edges[n_sig_edges %in% c(3, 4)])
 
+low_sig_edges_ex_id <- sample(low_sig_edges_ids, 1)
+med_sig_edges_ex_id <- sample(med_sig_edges_ids, 1)
 
+if (low_sig_edges_ex_id != "999341") {
+  stop("low_sig_edges_ex_id should be 999341. Restart R and rerun script.")
+}
+if (med_sig_edges_ex_id != "861114") {
+  stop("med_sig_edges_ex_id should be 861114. Restart R and rerun script.")
+}
 
+n_sig_edges[med_sig_edges_ex_id] == 3 # "861114" has 3 significant edges
+
+high_sig_edges_ex_id <- "326177"
 
 # Determine number of participants for which each edge is significant
 
@@ -232,6 +254,18 @@ plot_network(adj_mat_516921, "thres_a05")
 adj_mat_326177 <- thres_adj_mats_var[["326177"]]
 
 plot_network(adj_mat_326177, "thres_a05")
+
+  # For example participant with low number of significant edges (1)
+
+adj_mat_999341 <- thres_adj_mats_var[["999341"]]
+
+plot_network(adj_mat_999341, "thres_a05")
+
+  # For example participant with medium number of significant edges (3)
+
+adj_mat_861114 <- thres_adj_mats_var[["861114"]]
+
+plot_network(adj_mat_861114, "thres_a05")
 
 # ---------------------------------------------------------------------------- #
 # Explore number of observations ----

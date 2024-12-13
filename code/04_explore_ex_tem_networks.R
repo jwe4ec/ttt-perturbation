@@ -33,7 +33,7 @@ groundhog.library("qgraph", groundhog_day)
 set.seed(1234)
 
 # ---------------------------------------------------------------------------- #
-# Import data and selected results ----
+# Import data, selected results, and adjacency matrices ----
 # ---------------------------------------------------------------------------- #
 
 # Data
@@ -45,7 +45,24 @@ load("./data/from_ttt-p1-main-analysis/final_clean/data_var.RDS")
 extracted_results_path <- "./results/from_ttt-p1-main-analysis/extracted/"
 
 load(paste0(extracted_results_path, "results_var.RDS"))
-load(paste0(extracted_results_path, "thres_adj_mats_var.RDS"))
+
+# TODO: Adjacency matrices for temporal results from idiographic VAR models
+
+
+
+
+
+# TODO: Redo analyses below using saturated adjacency matrices
+
+
+
+
+
+# TODO: Investigate missing data patterns
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Explore number of significant autoregressive and cross-lagged effects ----

@@ -211,7 +211,7 @@ plot_network <- function(tem, thres) {
     
     tem_title <- "Temporal"
 
-    plots_path <- "./results/from_ttt-p1-main-analysis/var/plots/"
+    plots_path <- "./results/network_plots/"
     
     tem_plot_filename  <- paste0(plots_path, model_name, "_tem_plot_", thres)
 
@@ -244,6 +244,8 @@ plot_network <- function(tem, thres) {
 }
 
 # Run function
+
+dir.create("./results/network_plots/")
 
   # For participant with high number of significant edges (10)
 

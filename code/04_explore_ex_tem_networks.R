@@ -191,6 +191,21 @@ for (i in 1:nrow(thres_adj_mats_var_sig_freq_range)) {
 thres_adj_mats_var_sig_freq_range
 
 # ---------------------------------------------------------------------------- #
+# Restrict to example participants ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Temporarily restrict sample until ready to analyze full sample
+
+
+
+
+
+retain_ids <- c(high_sig_edges_ex_id, med_sig_edges_ex_id, low_sig_edges_ex_id)
+
+thres_adj_mats_var <- thres_adj_mats_var[retain_ids]
+satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
+
+# ---------------------------------------------------------------------------- #
 # Plot temporal networks ----
 # ---------------------------------------------------------------------------- #
 
@@ -261,7 +276,11 @@ plot_network <- function(tem, thres) {
          filename = tem_plot_filename)
 }
 
-# Run function
+# TODO (use function to condense code): Run function
+
+
+
+
 
 dir.create("./results/network_plots/")
 
@@ -450,13 +469,13 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 # Compute predicted values starting from participant's detrended values at baseline ----
 # ---------------------------------------------------------------------------- #
 
-# Compute number of study time points for each participant
+# TODO (use function and list to condense code): Compute number of study time points for each participant
 
 n_study_timepoints_326177 <- nrow(data_326177)
 n_study_timepoints_861114 <- nrow(data_861114)
 n_study_timepoints_999341 <- nrow(data_999341)
 
-# Define starting values for each participant
+# TODO (use function and list to condense code): Define starting values for each participant
 
 define_start_bl <- function(subject_data) {
   start_list_bl <- list(bad      = subject_data[1, "bad_d"],
@@ -473,7 +492,7 @@ start_list_bl_326177 <- define_start_bl(data_326177)
 start_list_bl_861114 <- define_start_bl(data_861114)
 start_list_bl_999341 <- define_start_bl(data_999341)
 
-# TODO (use function to condense code): Compute predicted values (a) over study period and (b) into future
+# TODO (use function and list to condense code): Compute predicted values (a) over study period and (b) into future
 
 
 

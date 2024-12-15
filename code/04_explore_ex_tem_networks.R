@@ -53,12 +53,6 @@ adj_mats_path <- "./results/adj_mats/"
 load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
 load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
 
-# TODO: Redo analyses below using saturated adjacency matrices
-
-
-
-
-
 # TODO: Investigate missing data patterns
 
 
@@ -191,6 +185,30 @@ for (i in 1:nrow(thres_adj_mats_var_sig_freq_range)) {
 thres_adj_mats_var_sig_freq_range
 
 # ---------------------------------------------------------------------------- #
+# Explore number of observations ----
+# ---------------------------------------------------------------------------- #
+
+data_var <- as.data.frame(data_var)
+
+# Identify approximate number of observations
+
+sum(!is.na(data_var[data_var$lifepak_id == high_sig_edges_ex_id, "bad"])) == 98
+sum(!is.na(data_var[data_var$lifepak_id == med_sig_edges_ex_id, "bad"])) == 93
+sum(!is.na(data_var[data_var$lifepak_id == low_sig_edges_ex_id, "bad"])) == 82
+
+# Identify distribution of approximate number of observations (range is 62-102)
+
+data_var_ls <- split(data_var, data_var$lifepak_id)
+
+hist(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))),
+     main = "Distribution of Number of Observations",
+     xlab = "Number of Observations",
+     ylab = "Number of Participants",
+     xlim = c(60, 105))
+
+all(range(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d))))) == c(62, 102))
+
+# ---------------------------------------------------------------------------- #
 # Restrict to example participants ----
 # ---------------------------------------------------------------------------- #
 
@@ -202,8 +220,44 @@ thres_adj_mats_var_sig_freq_range
 
 retain_ids <- c(high_sig_edges_ex_id, med_sig_edges_ex_id, low_sig_edges_ex_id)
 
+data_var_ls <- data_var_ls[retain_ids]
+
 thres_adj_mats_var <- thres_adj_mats_var[retain_ids]
 satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
+
+# ---------------------------------------------------------------------------- #
+# Explore item distributions ----
+# ---------------------------------------------------------------------------- #
+
+# For example participant with high number of significant edges
+
+# Before detrending
+
+par(mfrow = c(4, 2))
+hist(data_var_ls[[high_sig_edges_ex_id]]$bad)
+hist(data_var_ls[[high_sig_edges_ex_id]]$control)
+hist(data_var_ls[[high_sig_edges_ex_id]]$energy)
+hist(data_var_ls[[high_sig_edges_ex_id]]$focus)
+hist(data_var_ls[[high_sig_edges_ex_id]]$fun)
+hist(data_var_ls[[high_sig_edges_ex_id]]$interest)
+hist(data_var_ls[[high_sig_edges_ex_id]]$movement)
+hist(data_var_ls[[high_sig_edges_ex_id]]$sad)
+par(mfrow = c(1, 1))
+
+# After detrending
+
+par(mfrow = c(4, 2))
+hist(data_var_ls[[high_sig_edges_ex_id]]$bad_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$control_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$energy_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$focus_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$fun_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$interest_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$movement_d)
+hist(data_var_ls[[high_sig_edges_ex_id]]$sad_d)
+par(mfrow = c(1, 1))
+
+# Not done for example participants with medium or low numbers of significant edges
 
 # ---------------------------------------------------------------------------- #
 # Plot temporal networks ----
@@ -211,11 +265,7 @@ satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
 
 # Define function to plot temporal network
 
-plot_network <- function(tem, thres) {
-  # Get temporal adjacency matrix object name
-  
-  model_name <- deparse(substitute(tem))
-  
+plot_network <- function(tem, lifepak_id, thres) {
   # Get node variables and rename as labels
   
   labels <- row.names(tem)
@@ -233,7 +283,7 @@ plot_network <- function(tem, thres) {
   
     # Include edge labels only for thresholded networks (too cluttered in saturated networks)
   
-  if (thres == "full") {
+  if (thres == "satur") {
     edge_labels <- FALSE
   } else {
     edge_labels <- TRUE
@@ -242,11 +292,11 @@ plot_network <- function(tem, thres) {
     tem_to_plot <- tem
     max_for_plot <- max(abs(tem))
     
-    tem_title <- "Temporal"
+    tem_title <- paste0("Temporal (ID ", lifepak_id, ")")
 
     plots_path <- "./results/network_plots/"
     
-    tem_plot_filename  <- paste0(plots_path, model_name, "_tem_plot_", thres)
+    tem_plot_filename  <- paste0(plots_path, lifepak_id, "_tem_plot_", thres)
 
   # Plot circle graphs
   
@@ -274,133 +324,21 @@ plot_network <- function(tem, thres) {
   qgraph(tem_plot,
          filetype = "pdf",
          filename = tem_plot_filename)
+  
+  invisible()
 }
 
-# TODO (use function to condense code): Run function
-
-
-
-
+# Run function for thresholded and saturated networks
 
 dir.create("./results/network_plots/")
 
-  # For participant with high number of significant edges (10)
+lapply(names(thres_adj_mats_var), function(lifepak_id) {
+  plot_network(thres_adj_mats_var[[lifepak_id]], lifepak_id, "thres_a05")
+})
 
-adj_mat_326177 <- thres_adj_mats_var[["326177"]]
-
-plot_network(adj_mat_326177, "thres_a05")
-
-# For example participant with medium number of significant edges (3)
-
-adj_mat_861114 <- thres_adj_mats_var[["861114"]]
-
-plot_network(adj_mat_861114, "thres_a05")
-
-  # For example participant with low number of significant edges (1)
-
-adj_mat_999341 <- thres_adj_mats_var[["999341"]]
-
-plot_network(adj_mat_999341, "thres_a05")
-
-# ---------------------------------------------------------------------------- #
-# Explore number of observations ----
-# ---------------------------------------------------------------------------- #
-
-# View data for selected participants above
-
-# View(data_var[data_var$lifepak_id == "326177", ])
-# View(data_var[data_var$lifepak_id == "861114", ])
-# View(data_var[data_var$lifepak_id == "999341", ])
-
-# Identify approximate number of observations
-
-sum(!is.na(data_var[data_var$lifepak_id == "326177", "bad"])) # ~98 observations
-sum(!is.na(data_var[data_var$lifepak_id == "861114", "bad"])) # ~93 observations
-sum(!is.na(data_var[data_var$lifepak_id == "999341", "bad"])) # ~82 observations
-
-# Identify distribution of approximate number of observations (range is 62-102)
-
-data_var_ls <- split(data_var, data_var$lifepak_id)
-
-hist(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))),
-     main = "Distribution of Number of Observations",
-     xlab = "Number of Observations",
-     ylab = "Number of Participants",
-     xlim = c(60, 105))
-
-all(range(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d))))) == c(62, 102))
-
-# ---------------------------------------------------------------------------- #
-# Extract example participants' data ----
-# ---------------------------------------------------------------------------- #
-
-data_326177 <- as.data.frame(data_var_ls[[high_sig_edges_ex_id]])
-data_861114 <- as.data.frame(data_var_ls[[med_sig_edges_ex_id]])
-data_999341 <- as.data.frame(data_var_ls[[low_sig_edges_ex_id]])
-
-# ---------------------------------------------------------------------------- #
-# Explore item distributions ----
-# ---------------------------------------------------------------------------- #
-
-# For example participant with high number of significant edges
-
-  # Before detrending
-
-par(mfrow = c(4, 2))
-hist(data_326177$bad)
-hist(data_326177$control)
-hist(data_326177$energy)
-hist(data_326177$focus)
-hist(data_326177$fun)
-hist(data_326177$interest)
-hist(data_326177$movement)
-hist(data_326177$sad)
-par(mfrow = c(1, 1))
-
-  # After detrending
-
-par(mfrow = c(4, 2))
-hist(data_326177$bad_d)
-hist(data_326177$control_d)
-hist(data_326177$energy_d)
-hist(data_326177$focus_d)
-hist(data_326177$fun_d)
-hist(data_326177$interest_d)
-hist(data_326177$movement_d)
-hist(data_326177$sad_d)
-par(mfrow = c(1, 1))
-
-# Not done for example participants with medium or low numbers of significant edges
-
-# ---------------------------------------------------------------------------- #
-# Plot node values over time ----
-# ---------------------------------------------------------------------------- #
-
-# For example participant with high number of significant edges
-
-  # Before detrending
-
-plot(data_326177$bin_no_adj, data_326177$bad)
-plot(data_326177$bin_no_adj, data_326177$control)
-plot(data_326177$bin_no_adj, data_326177$energy)
-plot(data_326177$bin_no_adj, data_326177$focus)
-plot(data_326177$bin_no_adj, data_326177$fun)
-plot(data_326177$bin_no_adj, data_326177$interest)
-plot(data_326177$bin_no_adj, data_326177$movement)
-plot(data_326177$bin_no_adj, data_326177$sad)
-
-  # After detrending
-
-plot(data_326177$bin_no_adj, data_326177$bad_d)
-plot(data_326177$bin_no_adj, data_326177$control_d)
-plot(data_326177$bin_no_adj, data_326177$energy_d)
-plot(data_326177$bin_no_adj, data_326177$focus_d)
-plot(data_326177$bin_no_adj, data_326177$fun_d)
-plot(data_326177$bin_no_adj, data_326177$interest_d)
-plot(data_326177$bin_no_adj, data_326177$movement_d)
-plot(data_326177$bin_no_adj, data_326177$sad_d)
-
-# Not done for example participants with medium or low numbers of significant edges
+lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  plot_network(satur_adj_mats_var[[lifepak_id]], lifepak_id, "satur")
+})
 
 # ---------------------------------------------------------------------------- #
 # Define function to compute predicted values ----
@@ -469,66 +407,55 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 # Compute predicted values starting from participant's detrended values at baseline ----
 # ---------------------------------------------------------------------------- #
 
-# TODO (use function and list to condense code): Compute number of study time points for each participant
+# Compute number of study time points for each participant
 
-n_study_timepoints_326177 <- nrow(data_326177)
-n_study_timepoints_861114 <- nrow(data_861114)
-n_study_timepoints_999341 <- nrow(data_999341)
+n_study_timepoints <- lapply(data_var_ls, nrow)
 
-# TODO (use function and list to condense code): Define starting values for each participant
+# Define starting values for each participant
 
-define_start_bl <- function(subject_data) {
-  start_list_bl <- list(bad      = subject_data[1, "bad_d"],
-                        control  = subject_data[1, "control_d"],
-                        energy   = subject_data[1, "energy_d"],
-                        focus    = subject_data[1, "focus_d"],
-                        fun      = subject_data[1, "fun_d"],
-                        interest = subject_data[1, "interest_d"],
-                        movement = subject_data[1, "movement_d"],
-                        sad      = subject_data[1, "sad_d"])
+define_start_bl <- function(part_data) {
+  start_list_bl <- list(bad      = part_data[1, "bad_d"],
+                        control  = part_data[1, "control_d"],
+                        energy   = part_data[1, "energy_d"],
+                        focus    = part_data[1, "focus_d"],
+                        fun      = part_data[1, "fun_d"],
+                        interest = part_data[1, "interest_d"],
+                        movement = part_data[1, "movement_d"],
+                        sad      = part_data[1, "sad_d"])
 }
 
-start_list_bl_326177 <- define_start_bl(data_326177)
-start_list_bl_861114 <- define_start_bl(data_861114)
-start_list_bl_999341 <- define_start_bl(data_999341)
+start_list_bl <- lapply(data_var_ls, define_start_bl)
 
-# TODO (use function and list to condense code): Compute predicted values (a) over study period and (b) into future
+# Compute predicted values for thresholded and saturated networks (a) over study 
+# period and (b) into future 
 
+pred_study_bl_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
+  compute_pred(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl[[lifepak_id]])
+})
+pred_400_bl_thres_a05   <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
+  compute_pred(thres_adj_mats_var[[lifepak_id]], 400,                              start_list_bl[[lifepak_id]])
+})
 
+pred_study_bl_satur     <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  compute_pred(satur_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl[[lifepak_id]])
+})
+pred_400_bl_satur       <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  compute_pred(satur_adj_mats_var[[lifepak_id]], 400,                              start_list_bl[[lifepak_id]])
+})
 
+names(pred_study_bl_thres_a05) <- names(thres_adj_mats_var)
+names(pred_400_bl_thres_a05)   <- names(thres_adj_mats_var)
 
-
-  # For example participant with high number of significant edges
-
-pred_326177_study_bl <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_bl_326177)
-
-pred_326177_400_bl   <- compute_pred(adj_mat_326177, 400,                       start_list_bl_326177)
-pred_326177_4000_bl  <- compute_pred(adj_mat_326177, 4000,                      start_list_bl_326177)
-pred_326177_40000_bl <- compute_pred(adj_mat_326177, 40000,                     start_list_bl_326177)
-
-  # For example participant with medium number of significant edges
-
-pred_861114_study_bl <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_bl_861114)
-
-pred_861114_400_bl   <- compute_pred(adj_mat_861114, 400,                       start_list_bl_861114)
-pred_861114_4000_bl  <- compute_pred(adj_mat_861114, 4000,                      start_list_bl_861114)
-pred_861114_40000_bl <- compute_pred(adj_mat_861114, 40000,                     start_list_bl_861114)
-
-  # For example participant with low number of significant edges
-
-pred_999341_study_bl <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_bl_999341)
-
-pred_999341_400_bl   <- compute_pred(adj_mat_999341, 400,                       start_list_bl_999341)
-pred_999341_4000_bl  <- compute_pred(adj_mat_999341, 4000,                      start_list_bl_999341)
-pred_999341_40000_bl <- compute_pred(adj_mat_999341, 40000,                     start_list_bl_999341)
+names(pred_study_bl_satur)     <- names(satur_adj_mats_var)
+names(pred_400_bl_satur)       <- names(satur_adj_mats_var)
 
 # ---------------------------------------------------------------------------- #
 # Compute predicted values starting from participant's max for one node and 0 for others ----
 # ---------------------------------------------------------------------------- #
 
-# Define starting values for each participant
+# Define various starting values for each participant
 
-define_start_max_one_0_others <- function(subject_data) {
+define_start_max_one_0_others <- function(part_data) {
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
   start_list_max_one_0_others_element <- vector("list", length = length(vars))
@@ -539,87 +466,56 @@ define_start_max_one_0_others <- function(subject_data) {
   names(start_list_max_one_0_others) <- paste0("max_", vars, "_d")
   start_list_max_one_0_others[ ] <- list(start_list_max_one_0_others_element)
   
-  start_list_max_one_0_others$max_bad_d$bad           <- max(subject_data["bad_d"],      na.rm = TRUE)
-  start_list_max_one_0_others$max_control_d$control   <- max(subject_data["control_d"],  na.rm = TRUE)
-  start_list_max_one_0_others$max_energy_d$energy     <- max(subject_data["energy_d"],   na.rm = TRUE)
-  start_list_max_one_0_others$max_focus_d$focus       <- max(subject_data["focus_d"],    na.rm = TRUE)
-  start_list_max_one_0_others$max_fun_d$fun           <- max(subject_data["fun_d"],      na.rm = TRUE)
-  start_list_max_one_0_others$max_interest_d$interest <- max(subject_data["interest_d"], na.rm = TRUE)
-  start_list_max_one_0_others$max_movement_d$movement <- max(subject_data["movement_d"], na.rm = TRUE)
-  start_list_max_one_0_others$max_sad_d$sad           <- max(subject_data["sad_d"],      na.rm = TRUE)
+  start_list_max_one_0_others$max_bad_d$bad           <- max(part_data["bad_d"],      na.rm = TRUE)
+  start_list_max_one_0_others$max_control_d$control   <- max(part_data["control_d"],  na.rm = TRUE)
+  start_list_max_one_0_others$max_energy_d$energy     <- max(part_data["energy_d"],   na.rm = TRUE)
+  start_list_max_one_0_others$max_focus_d$focus       <- max(part_data["focus_d"],    na.rm = TRUE)
+  start_list_max_one_0_others$max_fun_d$fun           <- max(part_data["fun_d"],      na.rm = TRUE)
+  start_list_max_one_0_others$max_interest_d$interest <- max(part_data["interest_d"], na.rm = TRUE)
+  start_list_max_one_0_others$max_movement_d$movement <- max(part_data["movement_d"], na.rm = TRUE)
+  start_list_max_one_0_others$max_sad_d$sad           <- max(part_data["sad_d"],      na.rm = TRUE)
   
   return(start_list_max_one_0_others)
 }
 
-start_list_max_one_0_others_326177 <- define_start_max_one_0_others(data_326177)
-start_list_max_one_0_others_861114 <- define_start_max_one_0_others(data_861114)
-start_list_max_one_0_others_999341 <- define_start_max_one_0_others(data_999341)
+start_list_max_one_0_others <- lapply(data_var_ls, define_start_max_one_0_others)
 
-# TODO (use function to condense code): Compute predicted values (a) over study period and (b) into future
+# Define function to compute predicted values from various starting values
 
+compute_pred_various_start <- function(adj_mats_var, n_timepoints, various_start_lists, various_start_list_names) {
+  various_pred_lists <- vector("list", length(various_start_list_names))
+  names(various_pred_lists) <- various_start_list_names
+  
+  for (start_list_name in various_start_list_names) {
+    various_pred_lists[[start_list_name]] <- lapply(names(adj_mats_var), function(lifepak_id) {
+      if (length(n_timepoints) > 1) {
+        compute_pred(adj_mats_var[[lifepak_id]], n_timepoints[[lifepak_id]], various_start_lists[[lifepak_id]][[start_list_name]])
+      } else if (length(n_timepoints == 1)) {
+        compute_pred(adj_mats_var[[lifepak_id]], n_timepoints              , various_start_lists[[lifepak_id]][[start_list_name]])
+      }
+    })
+    
+    names(various_pred_lists[[start_list_name]]) <- names(adj_mats_var)
+  }
+  
+  return(various_pred_lists)
+}
 
+# Run function to compute predicted values for thresholded and saturated networks 
+# (a) over study period and (b) into future
 
+start_list_max_one_0_others_names <- paste0("max_", c("bad_d", "control_d", "energy_d", "focus_d",
+                                                      "fun_d", "interest_d", "movement_d", "sad_d"))
 
+pred_study_max_one_0_others_thres_a05 <- 
+  compute_pred_various_start(thres_adj_mats_var, n_study_timepoints, start_list_max_one_0_others, start_list_max_one_0_others_names)
+pred_400_max_one_0_others_thres_a05 <- 
+  compute_pred_various_start(thres_adj_mats_var, 400,                start_list_max_one_0_others, start_list_max_one_0_others_names)
 
-  # For example participant with high number of significant edges
-
-pred_326177_study_max_bad_d      <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_bad_d)
-pred_326177_study_max_control_d  <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_control_d)
-pred_326177_study_max_energy_d   <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_energy_d)
-pred_326177_study_max_focus_d    <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_focus_d)
-pred_326177_study_max_fun_d      <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_fun_d)
-pred_326177_study_max_interest_d <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_interest_d)
-pred_326177_study_max_movement_d <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_movement_d)
-pred_326177_study_max_sad_d      <- compute_pred(adj_mat_326177, n_study_timepoints_326177, start_list_max_one_0_others_326177$max_sad_d)
-
-pred_326177_400_max_bad_d        <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_bad_d)
-pred_326177_400_max_control_d    <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_control_d)
-pred_326177_400_max_energy_d     <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_energy_d)
-pred_326177_400_max_focus_d      <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_focus_d)
-pred_326177_400_max_fun_d        <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_fun_d)
-pred_326177_400_max_interest_d   <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_interest_d)
-pred_326177_400_max_movement_d   <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_movement_d)
-pred_326177_400_max_sad_d        <- compute_pred(adj_mat_326177, 400,                       start_list_max_one_0_others_326177$max_sad_d)
-
-  # For example participant with medium number of significant edges
-
-pred_861114_study_max_bad_d      <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_bad_d)
-pred_861114_study_max_control_d  <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_control_d)
-pred_861114_study_max_energy_d   <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_energy_d)
-pred_861114_study_max_focus_d    <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_focus_d)
-pred_861114_study_max_fun_d      <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_fun_d)
-pred_861114_study_max_interest_d <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_interest_d)
-pred_861114_study_max_movement_d <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_movement_d)
-pred_861114_study_max_sad_d      <- compute_pred(adj_mat_861114, n_study_timepoints_861114, start_list_max_one_0_others_861114$max_sad_d)
-
-pred_861114_400_max_bad_d        <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_bad_d)
-pred_861114_400_max_control_d    <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_control_d)
-pred_861114_400_max_energy_d     <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_energy_d)
-pred_861114_400_max_focus_d      <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_focus_d)
-pred_861114_400_max_fun_d        <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_fun_d)
-pred_861114_400_max_interest_d   <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_interest_d)
-pred_861114_400_max_movement_d   <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_movement_d)
-pred_861114_400_max_sad_d        <- compute_pred(adj_mat_861114, 400,                       start_list_max_one_0_others_861114$max_sad_d)
-
-  # For example participant with low number of significant edges
-
-pred_999341_study_max_bad_d      <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_bad_d)
-pred_999341_study_max_control_d  <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_control_d)
-pred_999341_study_max_energy_d   <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_energy_d)
-pred_999341_study_max_focus_d    <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_focus_d)
-pred_999341_study_max_fun_d      <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_fun_d)
-pred_999341_study_max_interest_d <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_interest_d)
-pred_999341_study_max_movement_d <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_movement_d)
-pred_999341_study_max_sad_d      <- compute_pred(adj_mat_999341, n_study_timepoints_999341, start_list_max_one_0_others_999341$max_sad_d)
-
-pred_999341_400_max_bad_d        <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_bad_d)
-pred_999341_400_max_control_d    <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_control_d)
-pred_999341_400_max_energy_d     <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_energy_d)
-pred_999341_400_max_focus_d      <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_focus_d)
-pred_999341_400_max_fun_d        <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_fun_d)
-pred_999341_400_max_interest_d   <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_interest_d)
-pred_999341_400_max_movement_d   <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_movement_d)
-pred_999341_400_max_sad_d        <- compute_pred(adj_mat_999341, 400,                       start_list_max_one_0_others_999341$max_sad_d)
+pred_study_max_one_0_others_satur <- 
+  compute_pred_various_start(satur_adj_mats_var, n_study_timepoints, start_list_max_one_0_others, start_list_max_one_0_others_names)
+pred_400_max_one_0_others_satur <- 
+  compute_pred_various_start(satur_adj_mats_var, 400,                start_list_max_one_0_others, start_list_max_one_0_others_names)
 
 # ---------------------------------------------------------------------------- #
 # Plot predicted values ----
@@ -627,10 +523,9 @@ pred_999341_400_max_sad_d        <- compute_pred(adj_mat_999341, 400,           
 
 # Define function to plot predicted (blue) and observed (black) values
 
-plot_pred_obs <- function(pred_df, obs_df, plot_title) {
+plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title) {
   obs_df$t <- 1:nrow(obs_df)
   
-  plot_name <- deparse(substitute(pred_df))
   plot_title <- plot_title
 
   pdf(paste0("./results/pred_values/", plot_name, ".pdf"))
@@ -684,7 +579,7 @@ plot_pred_obs <- function(pred_df, obs_df, plot_title) {
   dev.off()
 }
 
-# TODO (use function to condense code): Run function
+# (TODO: Revise filenames for better sorting of outputs) Run function
 
 
 
@@ -692,80 +587,78 @@ plot_pred_obs <- function(pred_df, obs_df, plot_title) {
 
 dir.create("./results/pred_values/")
 
-  # For example participant with high number of significant edges
+  # For predicted values starting from observed baseline values
 
-plot_pred_obs(pred_326177_study_bl,             data_326177, "Through Study Starting From Obs. Baseline Values (ID 326177)")
+lapply(names(pred_study_bl_thres_a05), function(lifepak_id) {
+  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+                paste0("pred_study_bl_thres_a05_", lifepak_id),
+                paste0("Through Study for Thresholded Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
+})
+lapply(names(pred_400_bl_thres_a05),   function(lifepak_id) {
+  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   data_var_ls[[lifepak_id]],
+                paste0("pred_400_bl_thres_a05_",   lifepak_id),
+                paste0("Through 400 for Thresholded Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
+})
 
-plot_pred_obs(pred_326177_400_bl,               data_326177, "Through 400 Starting From Obs. Baseline Values (ID 326177)")
-plot_pred_obs(pred_326177_4000_bl,              data_326177, "Through 4000 Starting From Obs. Baseline Values (ID 326177)")
+lapply(names(pred_study_bl_satur),     function(lifepak_id) {
+  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+                paste0("pred_study_bl_satur_",     lifepak_id),
+                paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
+})
+lapply(names(pred_400_bl_satur),       function(lifepak_id) {
+  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       data_var_ls[[lifepak_id]],
+                paste0("pred_400_bl_satur_",       lifepak_id),
+                paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ",     lifepak_id, ")"))
+})
 
-plot_pred_obs(pred_326177_study_max_bad_d,      data_326177, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_control_d,  data_326177, 'Through Study Starting From Max "Lack Control" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_energy_d,   data_326177, 'Through Study Starting From Max "Fatigue" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_focus_d,    data_326177, 'Through Study Starting From Max "Lack Focus" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_fun_d,      data_326177, 'Through Study Starting From Max "Inaction" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_interest_d, data_326177, 'Through Study Starting From Max "Lack Interest" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_movement_d, data_326177, 'Through Study Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_study_max_sad_d,      data_326177, 'Through Study Starting From Max "Sad" and 0 Otherwise (ID 326177)')
+  # Define function to plot predicted values from various starting points
 
-plot_pred_obs(pred_326177_400_max_bad_d,        data_326177, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_control_d,    data_326177, 'Through 400 Starting From Max "Lack Control" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_energy_d,     data_326177, 'Through 400 Starting From Max "Fatigue" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_focus_d,      data_326177, 'Through 400 Starting From Max "Lack Focus" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_fun_d,        data_326177, 'Through 400 Starting From Max "Inaction" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_interest_d,   data_326177, 'Through 400 Starting From Max "Lack Interest" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_movement_d,   data_326177, 'Through 400 Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 326177)')
-plot_pred_obs(pred_326177_400_max_sad_d,        data_326177, 'Through 400 Starting From Max "Sad" and 0 Otherwise (ID 326177)')
+plot_pred_obs_various_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, data_var_ls, 
+                                        plot_name_stem, thres, plot_title_stem) {
+  for (i in 1:length(various_pred_lists)) {
+    pred_list <- various_pred_lists[[i]]
+    pred_list_name <- names(various_pred_lists)[i]
+    pred_list_focal_var_label <- various_pred_lists_focal_var_labels[i]
+    
+    pred_list_plot_title_stem <- sub("pred_list_focal_var_label", pred_list_focal_var_label, plot_title_stem)
+    
+    lapply(names(pred_list), function(lifepak_id) {
+      plot_pred_obs(pred_list[[lifepak_id]], data_var_ls[[lifepak_id]],
+                    paste0(plot_name_stem, "_", pred_list_name, "_", thres, "_", lifepak_id),
+                    paste0(pred_list_plot_title_stem, lifepak_id, ")"))
+    })
+  }
+}
 
-  # For example participant with medium number of significant edges
+  # Define label of focal variable for each list of starting values (use list names in
+  # "pred_study_max_one_0_others_thres_a05" as paradigmatic)
 
-plot_pred_obs(pred_861114_study_bl,             data_861114, "Through Study Starting From Obs. Baseline Values (ID 861114)")
+pred_max_one_0_others_focal_var_labels <- names(pred_study_max_one_0_others_thres_a05)
 
-plot_pred_obs(pred_861114_400_bl,               data_861114, "Through 400 Starting From Obs. Baseline Values (ID 861114)")
-plot_pred_obs(pred_861114_4000_bl,              data_861114, "Through 4000 Starting From Obs. Baseline Values (ID 861114)")
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_bad_d"]      <- "Bad Self"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_control_d"]  <- "Lack Control"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_energy_d"]   <- "Fatigue"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_focus_d"]    <- "Lack Focus"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_fun_d"]      <- "Inaction"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_interest_d"] <- "Lack Interest"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_movement_d"] <- "Slower or Fidgety"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_sad_d"]      <- "Sad"
 
-plot_pred_obs(pred_861114_study_max_bad_d,      data_861114, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_control_d,  data_861114, 'Through Study Starting From Max "Lack Control" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_energy_d,   data_861114, 'Through Study Starting From Max "Fatigue" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_focus_d,    data_861114, 'Through Study Starting From Max "Lack Focus" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_fun_d,      data_861114, 'Through Study Starting From Max "Inaction" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_interest_d, data_861114, 'Through Study Starting From Max "Lack Interest" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_movement_d, data_861114, 'Through Study Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_study_max_sad_d,      data_861114, 'Through Study Starting From Max "Sad" and 0 Otherwise (ID 861114)')
+  # Run "plot_pred_obs_various_start()" function
 
-plot_pred_obs(pred_861114_400_max_bad_d,        data_861114, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_control_d,    data_861114, 'Through 400 Starting From Max "Lack Control" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_energy_d,     data_861114, 'Through 400 Starting From Max "Fatigue" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_focus_d,      data_861114, 'Through 400 Starting From Max "Lack Focus" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_fun_d,        data_861114, 'Through 400 Starting From Max "Inaction" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_interest_d,   data_861114, 'Through 400 Starting From Max "Lack Interest" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_movement_d,   data_861114, 'Through 400 Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 861114)')
-plot_pred_obs(pred_861114_400_max_sad_d,        data_861114, 'Through 400 Starting From Max "Sad" and 0 Otherwise (ID 861114)')
+plot_pred_obs_various_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, data_var_ls,
+                            "pred_study_max_one_0_others", "thres_a05",
+                            'Through Study for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+plot_pred_obs_various_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, data_var_ls,
+                            "pred_400_max_one_0_others",   "thres_a05",
+                            'Through 400 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
-  # For example participant with low number of significant edges
-
-plot_pred_obs(pred_999341_study_bl,             data_999341, "Through Study Starting From Obs. Baseline Values (ID 999341)")
-
-plot_pred_obs(pred_999341_400_bl,               data_999341, "Through 400 Starting From Obs. Baseline Values (ID 999341)")
-plot_pred_obs(pred_999341_4000_bl,              data_999341, "Through 4000 Starting From Obs. Baseline Values (ID 999341)")
-
-plot_pred_obs(pred_999341_study_max_bad_d,      data_999341, 'Through Study Starting From Max "Bad Self" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_control_d,  data_999341, 'Through Study Starting From Max "Lack Control" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_energy_d,   data_999341, 'Through Study Starting From Max "Fatigue" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_focus_d,    data_999341, 'Through Study Starting From Max "Lack Focus" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_fun_d,      data_999341, 'Through Study Starting From Max "Inaction" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_interest_d, data_999341, 'Through Study Starting From Max "Lack Interest" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_movement_d, data_999341, 'Through Study Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_study_max_sad_d,      data_999341, 'Through Study Starting From Max "Sad" and 0 Otherwise (ID 999341)')
-
-plot_pred_obs(pred_999341_400_max_bad_d,        data_999341, 'Through 400 Starting From Max "Bad Self" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_control_d,    data_999341, 'Through 400 Starting From Max "Lack Control" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_energy_d,     data_999341, 'Through 400 Starting From Max "Fatigue" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_focus_d,      data_999341, 'Through 400 Starting From Max "Lack Focus" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_fun_d,        data_999341, 'Through 400 Starting From Max "Inaction" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_interest_d,   data_999341, 'Through 400 Starting From Max "Lack Interest" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_movement_d,   data_999341, 'Through 400 Starting From Max "Slower or Fidgety" and 0 Otherwise (ID 999341)')
-plot_pred_obs(pred_999341_400_max_sad_d,        data_999341, 'Through 400 Starting From Max "Sad" and 0 Otherwise (ID 999341)')
+plot_pred_obs_various_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, data_var_ls,
+                            "pred_study_max_one_0_others", "satur",
+                            'Through Study for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+plot_pred_obs_various_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, data_var_ls,
+                            "pred_400_max_one_0_others",   "satur",
+                            'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

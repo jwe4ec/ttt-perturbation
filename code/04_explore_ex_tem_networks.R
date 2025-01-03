@@ -53,12 +53,6 @@ adj_mats_path <- "./results/adj_mats/"
 load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
 load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
 
-# TODO: Investigate missing data patterns
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Explore number of significant autoregressive and cross-lagged effects ----
 # ---------------------------------------------------------------------------- #
@@ -196,7 +190,7 @@ sum(!is.na(data_var[data_var$lifepak_id == high_sig_edges_ex_id, "bad"])) == 98
 sum(!is.na(data_var[data_var$lifepak_id == med_sig_edges_ex_id, "bad"])) == 93
 sum(!is.na(data_var[data_var$lifepak_id == low_sig_edges_ex_id, "bad"])) == 82
 
-# Identify distribution of approximate number of observations (range is 62-102)
+# Identify distribution of approximate number of observations (range: 62-102, median: 86)
 
 data_var_ls <- split(data_var, data_var$lifepak_id)
 
@@ -206,7 +200,34 @@ hist(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))),
      ylab = "Number of Participants",
      xlim = c(60, 105))
 
-all(range(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d))))) == c(62, 102))
+all(range(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))))      == c(62, 102))
+median(unlist(lapply(data_var_ls,    function(x) sum(!is.na(x$bad_d)))))      == 86
+
+# ---------------------------------------------------------------------------- #
+# Investigate missing data patterns ----
+# ---------------------------------------------------------------------------- #
+
+# Plot observations over time for participants in first quartile of number of observations (74)
+
+q1 <- quantile(unlist(lapply(data_var_ls,  function(x) sum(!is.na(x$bad_d)))), .25)
+q1 == 74
+
+q1_ids <- names(data_var_ls)[unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))) < q1]
+
+# TODO: Adjust to presence/absence plot with a row for each node
+
+plot(data_var_ls[["163152"]]$bin_no_adj, is.na(data_var_ls[["163152"]]$bad_d))
+
+
+
+
+
+# TODO: Compute distance between each observation in time and then plot distribution.
+# Consider relevant summary statistics.
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Restrict to example participants ----

@@ -511,13 +511,18 @@ compute_k_pred <- function(part_data, adj_mat, k, iterations) {
 # Compute 4 predicted values starting from participant's detrended values at each time point ----
 # ---------------------------------------------------------------------------- #
 
-# Compute predicted values for saturated networks over study period
+# Compute predicted values for saturated and thresholded networks over study period
 
-pred_study_4_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+pred_study_4_satur     <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
   compute_k_pred(data_var_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
 })
 
-names(pred_study_4_satur) <- names(satur_adj_mats_var)
+pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(data_var_ls[[lifepak_id]], thres_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+})
+
+names(pred_study_4_satur)     <- names(satur_adj_mats_var)
+names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's max for one node and 0 for others ----
@@ -703,7 +708,7 @@ lapply(names(pred_400_bl_satur),       function(lifepak_id) {
                 paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ",     lifepak_id, ")"))
 })
 
-  # TODO (Do this for thresholded): For 4 predicted values starting from each time point
+  # For 4 predicted values starting from each time point
 
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
   plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
@@ -723,10 +728,24 @@ lapply(names(pred_study_4_satur),     function(lifepak_id) {
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
 })
 
+lapply(names(pred_study_4_thres_a05),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]],      data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_thres_a05_",      lifepak_id),
+                paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+})
+lapply(names(pred_study_4_thres_a05),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]],      data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
+                paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
+                iter_colors = TRUE)
+})
+lapply(names(pred_study_4_thres_a05),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]],      data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_thres_a05_1-50_iter_colors_",      lifepak_id),
+                paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
+                view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
+})
 
-
-
-  
 # Define function to plot predicted values from various starting points
 
 plot_pred_obs_various_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, data_var_ls, 

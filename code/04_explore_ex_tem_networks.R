@@ -443,7 +443,7 @@ define_start <- function(part_data, j) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Compute predicted values starting from participant's detrended values at baseline ----
+# Compute all predicted values starting from participant's detrended values at baseline ----
 # ---------------------------------------------------------------------------- #
 
 # Compute number of study time points for each participant
@@ -544,6 +544,53 @@ pred_study_max_one_0_others_satur <-
   compute_pred_various_start(satur_adj_mats_var, n_study_timepoints, start_list_max_one_0_others, start_list_max_one_0_others_names)
 pred_400_max_one_0_others_satur <- 
   compute_pred_various_start(satur_adj_mats_var, 400,                start_list_max_one_0_others, start_list_max_one_0_others_names)
+
+# ---------------------------------------------------------------------------- #
+# Define function to compute "k" predicted values starting from each time point ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to compute "k" predicted values over desired time points ("iterations") from
+# adjacency matrix, starting each iteration from observed value at that iteration's time point
+
+compute_k_pred <- function(part_data, adj_mat, k, iterations) {
+  pred <- data.frame()
+  
+  for (iter in 1:iterations) {
+    start_list <- define_start(part_data, iter)
+    
+    iter_pred <- compute_pred(adj_mat, k, start_list)
+    
+    names(iter_pred)[names(iter_pred) == "t"] <- "iter_t"
+    
+    iter_pred$iter <- iter
+    iter_pred <- iter_pred[, c("iter", names(iter_pred)[names(iter_pred) != "iter"])]
+    
+    pred <- rbind(pred, iter_pred)
+  }
+  
+  pred$t <- pred$iter + pred$iter_t - 1
+  pred <- pred[, c("t", names(pred)[names(pred) != "t"])]
+  
+  return(pred)
+}
+
+# ---------------------------------------------------------------------------- #
+# Compute 4 predicted values starting from participant's detrended values at each time point ----
+# ---------------------------------------------------------------------------- #
+
+# Compute predicted values for saturated networks over study period
+
+pred_4_study_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(data_var_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+})
+
+names(pred_4_study_satur) <- names(satur_adj_mats_var)
+
+# TODO: Plot "k" predicted values
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Plot predicted values ----

@@ -26,9 +26,10 @@ source("./code/01_define_functions.R")
 
 groundhog_day <- version_control()
 
-# Load package and set seed
+# Load packages and set seed
 
-groundhog.library("qgraph", groundhog_day)
+pkgs <- c("qgraph", "randomcoloR")
+groundhog.library(pkgs, groundhog_day)
 
 set.seed(1234)
 
@@ -478,7 +479,48 @@ names(pred_study_bl_satur)     <- names(satur_adj_mats_var)
 names(pred_400_bl_satur)       <- names(satur_adj_mats_var)
 
 # ---------------------------------------------------------------------------- #
-# Compute predicted values starting from participant's max for one node and 0 for others ----
+# Define function to compute "k" predicted values starting from each time point ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to compute "k" predicted values over desired time points ("iterations") from
+# adjacency matrix, starting each iteration from observed value at that iteration's time point
+
+compute_k_pred <- function(part_data, adj_mat, k, iterations) {
+  pred <- data.frame()
+  
+  for (iter in 1:iterations) {
+    start_list <- define_start(part_data, iter)
+    
+    iter_pred <- compute_pred(adj_mat, k, start_list)
+    
+    names(iter_pred)[names(iter_pred) == "t"] <- "iter_t"
+    
+    iter_pred$iter <- iter
+    iter_pred <- iter_pred[, c("iter", names(iter_pred)[names(iter_pred) != "iter"])]
+    
+    pred <- rbind(pred, iter_pred)
+  }
+  
+  pred$t <- pred$iter + pred$iter_t - 1
+  pred <- pred[, c("t", names(pred)[names(pred) != "t"])]
+  
+  return(pred)
+}
+
+# ---------------------------------------------------------------------------- #
+# Compute 4 predicted values starting from participant's detrended values at each time point ----
+# ---------------------------------------------------------------------------- #
+
+# Compute predicted values for saturated networks over study period
+
+pred_study_4_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(data_var_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+})
+
+names(pred_study_4_satur) <- names(satur_adj_mats_var)
+
+# ---------------------------------------------------------------------------- #
+# Compute all predicted values starting from participant's max for one node and 0 for others ----
 # ---------------------------------------------------------------------------- #
 
 # Define various starting values for each participant
@@ -546,60 +588,25 @@ pred_400_max_one_0_others_satur <-
   compute_pred_various_start(satur_adj_mats_var, 400,                start_list_max_one_0_others, start_list_max_one_0_others_names)
 
 # ---------------------------------------------------------------------------- #
-# Define function to compute "k" predicted values starting from each time point ----
-# ---------------------------------------------------------------------------- #
-
-# Define function to compute "k" predicted values over desired time points ("iterations") from
-# adjacency matrix, starting each iteration from observed value at that iteration's time point
-
-compute_k_pred <- function(part_data, adj_mat, k, iterations) {
-  pred <- data.frame()
-  
-  for (iter in 1:iterations) {
-    start_list <- define_start(part_data, iter)
-    
-    iter_pred <- compute_pred(adj_mat, k, start_list)
-    
-    names(iter_pred)[names(iter_pred) == "t"] <- "iter_t"
-    
-    iter_pred$iter <- iter
-    iter_pred <- iter_pred[, c("iter", names(iter_pred)[names(iter_pred) != "iter"])]
-    
-    pred <- rbind(pred, iter_pred)
-  }
-  
-  pred$t <- pred$iter + pred$iter_t - 1
-  pred <- pred[, c("t", names(pred)[names(pred) != "t"])]
-  
-  return(pred)
-}
-
-# ---------------------------------------------------------------------------- #
-# Compute 4 predicted values starting from participant's detrended values at each time point ----
-# ---------------------------------------------------------------------------- #
-
-# Compute predicted values for saturated networks over study period
-
-pred_4_study_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
-  compute_k_pred(data_var_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
-})
-
-names(pred_4_study_satur) <- names(satur_adj_mats_var)
-
-# TODO: Plot "k" predicted values
-
-
-
-
-
-# ---------------------------------------------------------------------------- #
 # Plot predicted values ----
 # ---------------------------------------------------------------------------- #
 
-# Define function to plot predicted (blue) and observed (black) values
+# Define function to plot predicted (green) and observed (black) values, with
+# options of (a) restricting displayed range of time points and (b) using a
+# different color for each iteration of "k" predicted values
 
-plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title) {
+plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title, 
+                          view_t_min = NULL, view_t_max = NULL, iter_colors = NULL) {
   obs_df$t <- 1:nrow(obs_df)
+  
+  # Optionally restrict displayed range of time points
+  
+  if (!is.null(view_t_min) & !is.null(view_t_max)) {
+    obs_df  <- obs_df[obs_df$t >= view_t_min & obs_df$t <= view_t_max, ]
+    pred_df <- pred_df[pred_df$t >= view_t_min & pred_df$t <= view_t_max, ]
+  }
+  
+  # Create plots
   
   plot_title <- plot_title
 
@@ -609,9 +616,19 @@ plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title) {
   
   xlab <- "Time"
   ylab <- "Detrended Value"
-  col_pred <- "green"
   pch <- 16
   ylim <- c(-100, 100)
+  
+  if (is.null(iter_colors)) {
+    col_pred <- "green"
+  } else if (iter_colors == TRUE) {
+    k            <- max(pred_df$iter_t)
+    n_iterations <- max(pred_df$iter)
+    
+    color_palette <- distinctColorPalette(n_iterations)
+    color_palette <- adjustcolor(color_palette, alpha.f = 0.75)
+    col_pred <- rep(color_palette, each = k)
+  }
   
   plot(pred_df$t, pred_df$bad_pred,      main = "Bad Self",
        xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
@@ -662,7 +679,7 @@ plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title) {
 
 dir.create("./results/pred_values/")
 
-  # For predicted values starting from observed baseline values
+  # For all predicted values starting from observed baseline values
 
 lapply(names(pred_study_bl_thres_a05), function(lifepak_id) {
   plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
@@ -686,7 +703,31 @@ lapply(names(pred_400_bl_satur),       function(lifepak_id) {
                 paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ",     lifepak_id, ")"))
 })
 
-  # Define function to plot predicted values from various starting points
+  # TODO (Do this for thresholded): For 4 predicted values starting from each time point
+
+lapply(names(pred_study_4_satur),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_",      lifepak_id),
+                paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+})
+lapply(names(pred_study_4_satur),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_iter_colors_",      lifepak_id),
+                paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
+                iter_colors = TRUE)
+})
+lapply(names(pred_study_4_satur),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_1-50_iter_colors_",      lifepak_id),
+                paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
+                view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
+})
+
+
+
+
+  
+# Define function to plot predicted values from various starting points
 
 plot_pred_obs_various_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, data_var_ls, 
                                         plot_name_stem, thres, plot_title_stem) {

@@ -254,29 +254,29 @@ satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
 
 # Before detrending
 
-par(mfrow = c(4, 2))
-hist(data_var_ls[[high_sig_edges_ex_id]]$bad)
-hist(data_var_ls[[high_sig_edges_ex_id]]$control)
-hist(data_var_ls[[high_sig_edges_ex_id]]$energy)
-hist(data_var_ls[[high_sig_edges_ex_id]]$focus)
-hist(data_var_ls[[high_sig_edges_ex_id]]$fun)
-hist(data_var_ls[[high_sig_edges_ex_id]]$interest)
-hist(data_var_ls[[high_sig_edges_ex_id]]$movement)
-hist(data_var_ls[[high_sig_edges_ex_id]]$sad)
-par(mfrow = c(1, 1))
+# par(mfrow = c(4, 2))
+# hist(data_var_ls[[high_sig_edges_ex_id]]$bad)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$control)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$energy)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$focus)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$fun)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$interest)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$movement)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$sad)
+# par(mfrow = c(1, 1))
 
 # After detrending
 
-par(mfrow = c(4, 2))
-hist(data_var_ls[[high_sig_edges_ex_id]]$bad_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$control_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$energy_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$focus_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$fun_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$interest_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$movement_d)
-hist(data_var_ls[[high_sig_edges_ex_id]]$sad_d)
-par(mfrow = c(1, 1))
+# par(mfrow = c(4, 2))
+# hist(data_var_ls[[high_sig_edges_ex_id]]$bad_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$control_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$energy_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$focus_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$fun_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$interest_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$movement_d)
+# hist(data_var_ls[[high_sig_edges_ex_id]]$sad_d)
+# par(mfrow = c(1, 1))
 
 # Not done for example participants with medium or low numbers of significant edges
 
@@ -425,6 +425,24 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 }
 
 # ---------------------------------------------------------------------------- #
+# Define function for defining starting values from detrended values in data ----
+# ---------------------------------------------------------------------------- #
+
+# Define function for defining starting values from participant's detrended values 
+# in data at a given time point "j"
+
+define_start <- function(part_data, j) {
+  start_list <- list(bad      = part_data[j, "bad_d"],
+                     control  = part_data[j, "control_d"],
+                     energy   = part_data[j, "energy_d"],
+                     focus    = part_data[j, "focus_d"],
+                     fun      = part_data[j, "fun_d"],
+                     interest = part_data[j, "interest_d"],
+                     movement = part_data[j, "movement_d"],
+                     sad      = part_data[j, "sad_d"])
+}
+
+# ---------------------------------------------------------------------------- #
 # Compute predicted values starting from participant's detrended values at baseline ----
 # ---------------------------------------------------------------------------- #
 
@@ -432,20 +450,9 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 
 n_study_timepoints <- lapply(data_var_ls, nrow)
 
-# Define starting values for each participant
+# Define starting values for each participant from detrended values at baseline
 
-define_start_bl <- function(part_data) {
-  start_list_bl <- list(bad      = part_data[1, "bad_d"],
-                        control  = part_data[1, "control_d"],
-                        energy   = part_data[1, "energy_d"],
-                        focus    = part_data[1, "focus_d"],
-                        fun      = part_data[1, "fun_d"],
-                        interest = part_data[1, "interest_d"],
-                        movement = part_data[1, "movement_d"],
-                        sad      = part_data[1, "sad_d"])
-}
-
-start_list_bl <- lapply(data_var_ls, define_start_bl)
+start_list_bl <- lapply(data_var_ls, define_start, 1)
 
 # Compute predicted values for thresholded and saturated networks (a) over study 
 # period and (b) into future 

@@ -508,7 +508,7 @@ compute_k_pred <- function(part_data, adj_mat, k, iterations) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Define function to compute average of "k" predicted values starting from each time point  ----
+# Define function to compute mean of "k" predicted values starting from each time point  ----
 # ---------------------------------------------------------------------------- #
 
 compute_k_pred_m <- function(pred) {
@@ -545,7 +545,7 @@ pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id)
 names(pred_study_4_satur)     <- names(satur_adj_mats_var)
 names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 
-# Compute average of predicted values (excluding observed values)
+# Compute mean of predicted values at each time point (excluding observed values)
 
 pred_m_study_4_satur     <- lapply(pred_study_4_satur,     compute_k_pred_m)
 pred_m_study_4_thres_a05 <- lapply(pred_study_4_thres_a05, compute_k_pred_m)
@@ -726,50 +726,64 @@ lapply(names(pred_400_bl_thres_a05),   function(lifepak_id) {
 lapply(names(pred_study_bl_satur),     function(lifepak_id) {
   plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
                 paste0("pred_study_bl_satur_",     lifepak_id),
-                paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
+                paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_satur),       function(lifepak_id) {
   plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       data_var_ls[[lifepak_id]],
                 paste0("pred_400_bl_satur_",       lifepak_id),
-                paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ",     lifepak_id, ")"))
+                paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 
   # For 4 predicted values starting from each time point
 
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_satur_",      lifepak_id),
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_",                      lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_satur_iter_colors_",      lifepak_id),
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_iter_colors_",          lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],      data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_satur_1-50_iter_colors_",      lifepak_id),
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_1-50_iter_colors_",     lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
 })
 
-lapply(names(pred_study_4_thres_a05),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]],      data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_thres_a05_",      lifepak_id),
+lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_thres_a05_",                  lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
-lapply(names(pred_study_4_thres_a05),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]],      data_var_ls[[lifepak_id]],
+lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
                 paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
-lapply(names(pred_study_4_thres_a05),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]],      data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_thres_a05_1-50_iter_colors_",      lifepak_id),
+lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_thres_a05_1-50_iter_colors_", lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
+})
+
+  # For mean of 4 predicted values starting from each time point (excluding observed values)
+
+lapply(names(pred_m_study_4_satur),  function(lifepak_id) {
+  plot_pred_obs(pred_m_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_satur_m_",                    lifepak_id),
+                paste0("Next 3 Through Study for Satur. Starting From Each Obs. Value, Averaged (ID ", lifepak_id, ")"))
+})
+
+lapply(names(pred_m_study_4_thres_a05),  function(lifepak_id) {
+  plot_pred_obs(pred_m_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+                paste0("pred_study_4_thres_a05_m_",                lifepak_id),
+                paste0("Next 3 Through Study for Thres. Starting From Each Obs. Value, Averaged (ID ", lifepak_id, ")"))
 })
 
 # Define function to plot predicted values from various starting points

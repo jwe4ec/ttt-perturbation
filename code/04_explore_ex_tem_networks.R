@@ -529,6 +529,25 @@ compute_k_pred_m <- function(pred) {
 }
 
 # ---------------------------------------------------------------------------- #
+# Define function to compute prediction error  ----
+# ---------------------------------------------------------------------------- #
+
+compute_pred_error <- function(part_data, pred) {
+  names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
+  
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  target_cols <- paste0(vars, "_d")
+  pred <- merge(pred, part_data[, c("t", target_cols)], "t", all.x = TRUE)
+  
+  for (var in vars) {
+    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
+  }
+  
+  return(pred)
+}
+
+# ---------------------------------------------------------------------------- #
 # Compute 4 predicted values starting from participant's detrended values at each time point ----
 # ---------------------------------------------------------------------------- #
 
@@ -549,6 +568,16 @@ names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 
 pred_m_study_4_satur     <- lapply(pred_study_4_satur,     compute_k_pred_m)
 pred_m_study_4_thres_a05 <- lapply(pred_study_4_thres_a05, compute_k_pred_m)
+
+# Compute prediction error
+
+pred_m_error_study_4_satur     <- lapply(names(data_var_ls), function(lifepak_id) {
+  compute_pred_error(data_var_ls[[lifepak_id]], pred_m_study_4_satur[[lifepak_id]])
+})
+
+pred_m_error_study_4_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) {
+  compute_pred_error(data_var_ls[[lifepak_id]], pred_m_study_4_thres_a05[[lifepak_id]])
+})
 
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's max for one node and 0 for others ----

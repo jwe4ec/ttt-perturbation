@@ -579,6 +579,9 @@ pred_m_error_study_4_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id
   compute_pred_error(data_var_ls[[lifepak_id]], pred_m_study_4_thres_a05[[lifepak_id]])
 })
 
+names(pred_m_error_study_4_satur)     <- names(data_var_ls)
+names(pred_m_error_study_4_thres_a05) <- names(data_var_ls)
+
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's max for one node and 0 for others ----
 # ---------------------------------------------------------------------------- #
@@ -668,8 +671,6 @@ plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title,
   
   # Create plots
   
-  plot_title <- plot_title
-
   pdf(paste0("./results/pred_values/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
@@ -863,6 +864,109 @@ plot_pred_obs_various_start(pred_study_max_one_0_others_satur,     pred_max_one_
 plot_pred_obs_various_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, data_var_ls,
                             "pred_400_max_one_0_others",   "satur",
                             'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+
+# ---------------------------------------------------------------------------- #
+# Plot prediction errors  ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to plot prediction error over time, optionally plotting the
+# absolute value of the prediction error
+
+plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL) {
+  pdf(paste0("./results/pred_error/", plot_name, ".pdf"))
+  
+  par(mfrow = c(2, 2))
+  
+  xlab <- "Time"
+  col  <- "red"
+  pch  <- 16
+  
+  if (is.null(abs)) {
+    ylab <- "Prediction Error"
+    ylim <- c(-100, 100)
+    
+    plot(pred_error$t, pred_error$bad_error,      main = "Bad Self",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$control_error,  main = "Lack Control",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$energy_error,   main = "Fatigue",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$focus_error,    main = "Lack Focus",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+    
+    plot(pred_error$t, pred_error$fun_error,      main = "Inaction",  
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$interest_error, main = "Lack Interest",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$movement_error, main = "Slower or Fidgety",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$sad_error,      main = "Sad", 
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  } else if (abs == TRUE) {
+    ylab <- "|Prediction Error|"
+    ylim <- c(0, 100)
+    
+    plot(pred_error$t, abs(pred_error$bad_error),      main = "Bad Self",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, abs(pred_error$control_error),  main = "Lack Control",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, abs(pred_error$energy_error),   main = "Fatigue",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, abs(pred_error$focus_error),    main = "Lack Focus",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+    
+    plot(pred_error$t, abs(pred_error$fun_error),      main = "Inaction",  
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, abs(pred_error$interest_error), main = "Lack Interest",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, abs(pred_error$movement_error), main = "Slower or Fidgety",
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, abs(pred_error$sad_error),      main = "Sad", 
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  }
+  
+  par(mfrow = c(1, 1))
+  
+  dev.off()
+}
+
+# Run function
+
+dir.create("./results/pred_error/")
+
+  # For mean of 4 predicted values starting from each time point (excluding observed values)
+
+lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
+  plot_pred_error(pred_m_error_study_4_satur[[lifepak_id]],
+                  paste0("pred_study_4_satur_m_error_", lifepak_id),
+                  paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"))
+})
+lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
+  plot_pred_error(pred_m_error_study_4_satur[[lifepak_id]],
+                  paste0("pred_study_4_satur_m_error_abs_", lifepak_id),
+                  paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
+                  abs = TRUE)
+})
+
+lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
+                  paste0("pred_study_4_thres_a05_m_error_", lifepak_id),
+                  paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"))
+})
+lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
+                  paste0("pred_study_4_thres_a05_m_error_abs_", lifepak_id),
+                  paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
+                  abs = TRUE)
+})
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

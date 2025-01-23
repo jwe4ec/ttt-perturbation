@@ -508,6 +508,27 @@ compute_k_pred <- function(part_data, adj_mat, k, iterations) {
 }
 
 # ---------------------------------------------------------------------------- #
+# Define function to compute average of "k" predicted values starting from each time point  ----
+# ---------------------------------------------------------------------------- #
+
+compute_k_pred_m <- function(pred) {
+  # Exclude observed values, which were used as starting values for each iteration
+  
+  target_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_pred")
+  
+  pred[pred$iter_t == 1, target_cols] <- NA
+  
+  # Compute mean predicted values at each time point across iterations
+  
+  pred_m <- aggregate(. ~ t, pred[, c("t", target_cols)], FUN = function(x) mean(x, na.rm = TRUE))
+  
+  all_t <- data.frame(t = unique(pred$t))
+  pred_m <- merge(all_t, pred_m, by = "t", all.x = TRUE)
+  
+  return(pred_m)
+}
+
+# ---------------------------------------------------------------------------- #
 # Compute 4 predicted values starting from participant's detrended values at each time point ----
 # ---------------------------------------------------------------------------- #
 
@@ -523,6 +544,11 @@ pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id)
 
 names(pred_study_4_satur)     <- names(satur_adj_mats_var)
 names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
+
+# Compute average of predicted values (excluding observed values)
+
+pred_m_study_4_satur     <- lapply(pred_study_4_satur,     compute_k_pred_m)
+pred_m_study_4_thres_a05 <- lapply(pred_study_4_thres_a05, compute_k_pred_m)
 
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's max for one node and 0 for others ----

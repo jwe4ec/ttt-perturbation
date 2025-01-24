@@ -529,25 +529,6 @@ compute_k_pred_m <- function(pred) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Define function to compute prediction error  ----
-# ---------------------------------------------------------------------------- #
-
-compute_pred_error <- function(part_data, pred) {
-  names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
-  
-  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
-  
-  target_cols <- paste0(vars, "_d")
-  pred <- merge(pred, part_data[, c("t", target_cols)], "t", all.x = TRUE)
-  
-  for (var in vars) {
-    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
-  }
-  
-  return(pred)
-}
-
-# ---------------------------------------------------------------------------- #
 # Compute 4 predicted values starting from participant's detrended values at each time point ----
 # ---------------------------------------------------------------------------- #
 
@@ -569,7 +550,58 @@ names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 pred_m_study_4_satur     <- lapply(pred_study_4_satur,     compute_k_pred_m)
 pred_m_study_4_thres_a05 <- lapply(pred_study_4_thres_a05, compute_k_pred_m)
 
-# Compute prediction error
+# ---------------------------------------------------------------------------- #
+# Define function to compute prediction error  ----
+# ---------------------------------------------------------------------------- #
+
+compute_pred_error <- function(part_data, pred) {
+  names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
+  
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  target_cols <- paste0(vars, "_d")
+  pred <- merge(pred, part_data[, c("t", target_cols)], "t", all.x = TRUE)
+  
+  # Compute signed prediction error
+  
+  for (var in vars) {
+    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
+  }
+  
+  # Compute cumulative absolute prediction error (cumulative sum of absolute value of prediction error)
+  
+  for (var in vars) {
+    pred[, paste0(var, "_cum_err")] <- cumsum(ifelse(is.na(pred[, paste0(var, "_error")]), 0, 
+                                                     abs(pred[, paste0(var, "_error")])))
+    
+    pred[is.na(pred[, paste0(var, "_error")]), paste0(var, "_cum_err")] <- NA
+  }
+  
+  return(pred)
+}
+
+# ---------------------------------------------------------------------------- #
+# Compute signed prediction error and cumulative absolute prediction error ----
+# ---------------------------------------------------------------------------- #
+
+# TODO (Consider whether not to compute prediction error at baseline in this case): For all predicted values starting from baseline
+
+pred_error_study_bl_satur <- lapply(names(data_var_ls), function(lifepak_id) {
+  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_bl_satur[[lifepak_id]])
+})
+
+pred_error_study_bl_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) {
+  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_bl_thres_a05[[lifepak_id]])
+})
+
+names(pred_error_study_bl_satur)     <- names(data_var_ls)
+names(pred_error_study_bl_thres_a05) <- names(data_var_ls)
+
+
+
+
+
+# For mean of 4 predicted values at each time point
 
 pred_m_error_study_4_satur     <- lapply(names(data_var_ls), function(lifepak_id) {
   compute_pred_error(data_var_ls[[lifepak_id]], pred_m_study_4_satur[[lifepak_id]])
@@ -869,10 +901,15 @@ plot_pred_obs_various_start(pred_400_max_one_0_others_satur,       pred_max_one_
 # Plot prediction errors  ----
 # ---------------------------------------------------------------------------- #
 
-# Define function to plot prediction error over time, optionally plotting the
-# absolute value of the prediction error
+# TODO (streamline logic of if/else statements): Define function to plot signed 
+# prediction error over time, optionally plotting (a) absolute value of the 
+# prediction error or (b) cumulative absolute prediction error
 
-plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL) {
+
+
+
+
+plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL, cum_abs = NULL) {
   pdf(paste0("./results/pred_error/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
@@ -881,7 +918,7 @@ plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL) {
   col  <- "red"
   pch  <- 16
   
-  if (is.null(abs)) {
+  if (is.null(abs) & is.null(cum_abs)) {
     ylab <- "Prediction Error"
     ylim <- c(-100, 100)
     
@@ -906,29 +943,55 @@ plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL) {
          xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
     
     mtext(plot_title, side = 3, line = -1, outer = TRUE)
-  } else if (abs == TRUE) {
-    ylab <- "|Prediction Error|"
-    ylim <- c(0, 100)
-    
-    plot(pred_error$t, abs(pred_error$bad_error),      main = "Bad Self",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, abs(pred_error$control_error),  main = "Lack Control",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, abs(pred_error$energy_error),   main = "Fatigue",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, abs(pred_error$focus_error),    main = "Lack Focus",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+  } else if (!is.null(abs)) {
+    if (abs == TRUE) {
+      ylab <- "|Prediction Error|"
+      ylim <- c(0, 100)
+      
+      plot(pred_error$t, abs(pred_error$bad_error),      main = "Bad Self",
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      plot(pred_error$t, abs(pred_error$control_error),  main = "Lack Control",
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      plot(pred_error$t, abs(pred_error$energy_error),   main = "Fatigue",
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      plot(pred_error$t, abs(pred_error$focus_error),    main = "Lack Focus",
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      
+      mtext(plot_title, side = 3, line = -1, outer = TRUE)
+      
+      plot(pred_error$t, abs(pred_error$fun_error),      main = "Inaction",  
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      plot(pred_error$t, abs(pred_error$interest_error), main = "Lack Interest",
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      plot(pred_error$t, abs(pred_error$movement_error), main = "Slower or Fidgety",
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      plot(pred_error$t, abs(pred_error$sad_error),      main = "Sad", 
+           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+      
+      mtext(plot_title, side = 3, line = -1, outer = TRUE)
+    }
+  } else if (cum_abs == TRUE) {
+    ylab <- "Cumulative |Prediction Error|"
+
+    plot(pred_error$t, pred_error$bad_cum_err,      main = "Bad Self",
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
+    plot(pred_error$t, pred_error$control_cum_err,  main = "Lack Control",
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
+    plot(pred_error$t, pred_error$energy_cum_err,   main = "Fatigue",
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
+    plot(pred_error$t, pred_error$focus_cum_err,    main = "Lack Focus",
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
     
     mtext(plot_title, side = 3, line = -1, outer = TRUE)
     
-    plot(pred_error$t, abs(pred_error$fun_error),      main = "Inaction",  
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, abs(pred_error$interest_error), main = "Lack Interest",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, abs(pred_error$movement_error), main = "Slower or Fidgety",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, abs(pred_error$sad_error),      main = "Sad", 
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
+    plot(pred_error$t, pred_error$fun_cum_err,      main = "Inaction",  
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
+    plot(pred_error$t, pred_error$interest_cum_err, main = "Lack Interest",
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
+    plot(pred_error$t, pred_error$movement_cum_err, main = "Slower or Fidgety",
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
+    plot(pred_error$t, pred_error$sad_cum_err,      main = "Sad", 
+         xlab = xlab, ylab = ylab, col = col, pch = pch)
     
     mtext(plot_title, side = 3, line = -1, outer = TRUE)
   }
@@ -941,6 +1004,32 @@ plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL) {
 # Run function
 
 dir.create("./results/pred_error/")
+
+  # For all predicted values starting from baseline
+
+lapply(names(pred_error_study_bl_satur),     function(lifepak_id) {
+  plot_pred_error(pred_error_study_bl_satur[[lifepak_id]],
+                  paste0("pred_study_bl_satur_error_", lifepak_id),
+                  paste0("Error for Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
+})
+lapply(names(pred_error_study_bl_satur),     function(lifepak_id) {
+  plot_pred_error(pred_error_study_bl_satur[[lifepak_id]],
+                  paste0("pred_study_bl_satur_error_abs_", lifepak_id),
+                  paste0("Error for Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"),
+                  abs = TRUE)
+})
+lapply(names(pred_error_study_bl_satur),     function(lifepak_id) {
+  plot_pred_error(pred_error_study_bl_satur[[lifepak_id]],
+                  paste0("pred_study_bl_satur_error_cum_abs_", lifepak_id),
+                  paste0("Error for Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"),
+                  cum_abs = TRUE)
+})
+
+    # TODO: Run for thresholded
+
+
+
+
 
   # For mean of 4 predicted values starting from each time point (excluding observed values)
 
@@ -955,6 +1044,12 @@ lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
                   paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
                   abs = TRUE)
 })
+lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
+  plot_pred_error(pred_m_error_study_4_satur[[lifepak_id]],
+                  paste0("pred_study_4_satur_m_error_cum_abs_", lifepak_id),
+                  paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
+                  cum_abs = TRUE)
+})
 
 lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
   plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
@@ -966,6 +1061,12 @@ lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
                   paste0("pred_study_4_thres_a05_m_error_abs_", lifepak_id),
                   paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
                   abs = TRUE)
+})
+lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
+                  paste0("pred_study_4_thres_a05_m_error_cum_abs_", lifepak_id),
+                  paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
+                  cum_abs = TRUE)
 })
 
 # ---------------------------------------------------------------------------- #

@@ -508,25 +508,67 @@ compute_k_pred <- function(part_data, adj_mat, k, iterations) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Define function to compute mean of "k" predicted values starting from each time point  ----
+# Define function to compute signed prediction errors ----
 # ---------------------------------------------------------------------------- #
 
-compute_k_pred_m <- function(pred) {
-  # Exclude observed values, which were used as starting values for each iteration
+# Define function to compute signed prediction errors for "k" predicted values
+# starting from each time point
+
+compute_pred_error <- function(part_data, pred) {
+  names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
   
-  target_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_pred")
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
-  pred[pred$iter_t == 1, target_cols] <- NA
+  target_cols <- paste0(vars, "_d")
+  part_data_tmp <- part_data[, c("t", target_cols)]
   
-  # Compute mean predicted values at each time point across iterations
+  pred <- merge(pred, part_data_tmp, by = "t", all.x = TRUE)
+  pred <- pred[order(pred$iter, pred$iter_t), ]
   
-  pred_m <- aggregate(. ~ t, pred[, c("t", target_cols)], FUN = function(x) mean(x, na.rm = TRUE))
+  # Compute signed prediction error
   
-  all_t <- data.frame(t = unique(pred$t))
-  pred_m <- merge(all_t, pred_m, by = "t", all.x = TRUE)
+  for (var in vars) {
+    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
+  }
   
-  return(pred_m)
+  return(pred)
 }
+
+# ---------------------------------------------------------------------------- #
+# Define function to compute R^2 at each "iter_t" ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to compute R^2 at each "iter_t" for "k" predicted values
+# starting from each time point
+
+compute_R2 <- function(pred_error) {
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  obs_cols   <- paste0(vars, "_d")
+  error_cols <- paste0(vars, "_error")
+  
+  for (var in vars) {
+    # TODO: Consider aggregate(), and consider missing predicted and observed values
+    
+    
+    
+    
+    
+    # pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
+  }
+  
+  
+}
+
+# TODO: Test above
+
+R2_study_4_satur <- compute_R2(pred_error_study_4_satur)
+
+View(pred_error_study_4_satur[[1]])
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Compute 4 predicted values starting from participant's detrended values at each time point ----
@@ -545,74 +587,24 @@ pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id)
 names(pred_study_4_satur)     <- names(satur_adj_mats_var)
 names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 
-# Compute mean of predicted values at each time point (excluding observed values)
+# Compute signed prediction error
 
-pred_m_study_4_satur     <- lapply(pred_study_4_satur,     compute_k_pred_m)
-pred_m_study_4_thres_a05 <- lapply(pred_study_4_thres_a05, compute_k_pred_m)
-
-# ---------------------------------------------------------------------------- #
-# Define function to compute prediction error  ----
-# ---------------------------------------------------------------------------- #
-
-compute_pred_error <- function(part_data, pred) {
-  names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
-  
-  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
-  
-  target_cols <- paste0(vars, "_d")
-  pred <- merge(pred, part_data[, c("t", target_cols)], "t", all.x = TRUE)
-  
-  # Compute signed prediction error
-  
-  for (var in vars) {
-    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
-  }
-  
-  # Compute cumulative absolute prediction error (cumulative sum of absolute value of prediction error)
-  
-  for (var in vars) {
-    pred[, paste0(var, "_cum_err")] <- cumsum(ifelse(is.na(pred[, paste0(var, "_error")]), 0, 
-                                                     abs(pred[, paste0(var, "_error")])))
-    
-    pred[is.na(pred[, paste0(var, "_error")]), paste0(var, "_cum_err")] <- NA
-  }
-  
-  return(pred)
-}
-
-# ---------------------------------------------------------------------------- #
-# Compute signed prediction error and cumulative absolute prediction error ----
-# ---------------------------------------------------------------------------- #
-
-# TODO (Consider whether not to compute prediction error at baseline in this case): For all predicted values starting from baseline
-
-pred_error_study_bl_satur <- lapply(names(data_var_ls), function(lifepak_id) {
-  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_bl_satur[[lifepak_id]])
+pred_error_study_4_satur     <- lapply(names(data_var_ls), function(lifepak_id) {
+  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_4_satur[[lifepak_id]])
 })
 
-pred_error_study_bl_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) {
-  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_bl_thres_a05[[lifepak_id]])
+pred_error_study_4_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) {
+  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_4_thres_a05[[lifepak_id]])
 })
 
-names(pred_error_study_bl_satur)     <- names(data_var_ls)
-names(pred_error_study_bl_thres_a05) <- names(data_var_ls)
+names(pred_error_study_4_satur)     <- names(data_var_ls)
+names(pred_error_study_4_thres_a05) <- names(data_var_ls)
+
+# TODO: Compute R^2 at each "iter_t"
 
 
 
 
-
-# For mean of 4 predicted values at each time point
-
-pred_m_error_study_4_satur     <- lapply(names(data_var_ls), function(lifepak_id) {
-  compute_pred_error(data_var_ls[[lifepak_id]], pred_m_study_4_satur[[lifepak_id]])
-})
-
-pred_m_error_study_4_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) {
-  compute_pred_error(data_var_ls[[lifepak_id]], pred_m_study_4_thres_a05[[lifepak_id]])
-})
-
-names(pred_m_error_study_4_satur)     <- names(data_var_ls)
-names(pred_m_error_study_4_thres_a05) <- names(data_var_ls)
 
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's max for one node and 0 for others ----
@@ -907,106 +899,66 @@ plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       pred_max_o
                                'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
 # ---------------------------------------------------------------------------- #
-# Plot prediction errors  ----
+# Plot signed prediction errors at each "iter_t" ----
 # ---------------------------------------------------------------------------- #
 
-# TODO (streamline logic of if/else statements): Define function to plot signed 
-# prediction error over time, optionally plotting (a) absolute value of the 
-# prediction error or (b) cumulative absolute prediction error
+# Define function to plot signed prediction errors at each "iter_t" for "k" predicted
+# values starting from each time point
 
-
-
-
-
-plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL, cum_abs = NULL) {
+plot_pred_error <- function(pred_error, plot_name, plot_title) {
+  pred_error$t_from_start <- NA
+  pred_error$t_from_start <- pred_error$iter_t - 1
+  
+  t_from_start_values <- unique(pred_error$t_from_start)
+  
+  xlab <- "Time Points From Starting Time Point"
+  ylab <- "Prediction Error"
+  ylim <- c(-100, 100)
+  col  <- "red"
+  pch  <- 16
+  
   pdf(paste0("./results/pred_error/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
   
-  xlab <- "Time"
-  col  <- "red"
-  pch  <- 16
+  plot(pred_error$t_from_start, pred_error$bad_error,      main = "Bad Self",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
   
-  if (is.null(abs) & is.null(cum_abs)) {
-    ylab <- "Prediction Error"
-    ylim <- c(-100, 100)
-    
-    plot(pred_error$t, pred_error$bad_error,      main = "Bad Self",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, pred_error$control_error,  main = "Lack Control",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, pred_error$energy_error,   main = "Fatigue",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, pred_error$focus_error,    main = "Lack Focus",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    
-    mtext(plot_title, side = 3, line = -1, outer = TRUE)
-    
-    plot(pred_error$t, pred_error$fun_error,      main = "Inaction",  
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, pred_error$interest_error, main = "Lack Interest",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, pred_error$movement_error, main = "Slower or Fidgety",
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    plot(pred_error$t, pred_error$sad_error,      main = "Sad", 
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-    
-    mtext(plot_title, side = 3, line = -1, outer = TRUE)
-  } else if (!is.null(abs)) {
-    if (abs == TRUE) {
-      ylab <- "|Prediction Error|"
-      ylim <- c(0, 100)
-      
-      plot(pred_error$t, abs(pred_error$bad_error),      main = "Bad Self",
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      plot(pred_error$t, abs(pred_error$control_error),  main = "Lack Control",
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      plot(pred_error$t, abs(pred_error$energy_error),   main = "Fatigue",
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      plot(pred_error$t, abs(pred_error$focus_error),    main = "Lack Focus",
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      
-      mtext(plot_title, side = 3, line = -1, outer = TRUE)
-      
-      plot(pred_error$t, abs(pred_error$fun_error),      main = "Inaction",  
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      plot(pred_error$t, abs(pred_error$interest_error), main = "Lack Interest",
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      plot(pred_error$t, abs(pred_error$movement_error), main = "Slower or Fidgety",
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      plot(pred_error$t, abs(pred_error$sad_error),      main = "Sad", 
-           xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim)
-      
-      mtext(plot_title, side = 3, line = -1, outer = TRUE)
-    }
-  } else if (cum_abs == TRUE) {
-    ylab <- "Cumulative |Prediction Error|"
+  plot(pred_error$t_from_start, pred_error$control_error,  main = "Lack Control",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
+  
+  plot(pred_error$t_from_start, pred_error$energy_error,   main = "Fatigue",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
+  
+  plot(pred_error$t_from_start, pred_error$focus_error,    main = "Lack Focus",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
+  
+  mtext(plot_title, side = 3, line = -1, outer = TRUE)
 
-    plot(pred_error$t, pred_error$bad_cum_err,      main = "Bad Self",
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    plot(pred_error$t, pred_error$control_cum_err,  main = "Lack Control",
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    plot(pred_error$t, pred_error$energy_cum_err,   main = "Fatigue",
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    plot(pred_error$t, pred_error$focus_cum_err,    main = "Lack Focus",
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    
-    mtext(plot_title, side = 3, line = -1, outer = TRUE)
-    
-    plot(pred_error$t, pred_error$fun_cum_err,      main = "Inaction",  
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    plot(pred_error$t, pred_error$interest_cum_err, main = "Lack Interest",
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    plot(pred_error$t, pred_error$movement_cum_err, main = "Slower or Fidgety",
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    plot(pred_error$t, pred_error$sad_cum_err,      main = "Sad", 
-         xlab = xlab, ylab = ylab, col = col, pch = pch)
-    
-    mtext(plot_title, side = 3, line = -1, outer = TRUE)
-  }
+  plot(pred_error$t_from_start, pred_error$fun_error,      main = "Inaction",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
   
+  plot(pred_error$t_from_start, pred_error$interest_error, main = "Lack Interest",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
+  
+  plot(pred_error$t_from_start, pred_error$movement_error, main = "Slower or Fidgety",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
+  
+  plot(pred_error$t_from_start, pred_error$sad_error,      main = "Sad",
+       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+  axis(1, at = t_from_start_values, labels = t_from_start_values)
+  
+  mtext(plot_title, side = 3, line = -1, outer = TRUE)
+
   par(mfrow = c(1, 1))
-  
+
   dev.off()
 }
 
@@ -1014,68 +966,18 @@ plot_pred_error <- function(pred_error, plot_name, plot_title, abs = NULL, cum_a
 
 dir.create("./results/pred_error/")
 
-  # For all predicted values starting from baseline
+  # For 4 predicted values starting from each time point
 
-lapply(names(pred_error_study_bl_satur),     function(lifepak_id) {
-  plot_pred_error(pred_error_study_bl_satur[[lifepak_id]],
-                  paste0("pred_study_bl_satur_error_", lifepak_id),
-                  paste0("Error for Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
-})
-lapply(names(pred_error_study_bl_satur),     function(lifepak_id) {
-  plot_pred_error(pred_error_study_bl_satur[[lifepak_id]],
-                  paste0("pred_study_bl_satur_error_abs_", lifepak_id),
-                  paste0("Error for Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"),
-                  abs = TRUE)
-})
-lapply(names(pred_error_study_bl_satur),     function(lifepak_id) {
-  plot_pred_error(pred_error_study_bl_satur[[lifepak_id]],
-                  paste0("pred_study_bl_satur_error_cum_abs_", lifepak_id),
-                  paste0("Error for Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"),
-                  cum_abs = TRUE)
+lapply(names(pred_error_study_4_satur),     function(lifepak_id) {
+  plot_pred_error(pred_error_study_4_satur[[lifepak_id]],
+                  paste0("pred_study_4_satur_error_", lifepak_id),
+                  paste0("Errors for Next 3 Through Study for Satur. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 
-    # TODO: Run for thresholded
-
-
-
-
-
-  # For mean of 4 predicted values starting from each time point (excluding observed values)
-
-lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
-  plot_pred_error(pred_m_error_study_4_satur[[lifepak_id]],
-                  paste0("pred_study_4_satur_m_error_", lifepak_id),
-                  paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"))
-})
-lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
-  plot_pred_error(pred_m_error_study_4_satur[[lifepak_id]],
-                  paste0("pred_study_4_satur_m_error_abs_", lifepak_id),
-                  paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
-                  abs = TRUE)
-})
-lapply(names(pred_m_error_study_4_satur),     function(lifepak_id) {
-  plot_pred_error(pred_m_error_study_4_satur[[lifepak_id]],
-                  paste0("pred_study_4_satur_m_error_cum_abs_", lifepak_id),
-                  paste0("Error for Next 3 Through Study for Satur. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
-                  cum_abs = TRUE)
-})
-
-lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
-                  paste0("pred_study_4_thres_a05_m_error_", lifepak_id),
-                  paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"))
-})
-lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
-                  paste0("pred_study_4_thres_a05_m_error_abs_", lifepak_id),
-                  paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
-                  abs = TRUE)
-})
-lapply(names(pred_m_error_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_error(pred_m_error_study_4_thres_a05[[lifepak_id]],
-                  paste0("pred_study_4_thres_a05_m_error_cum_abs_", lifepak_id),
-                  paste0("Error for Next 3 Through Study for Thres. Starting From Each Obs. Value, Avg'd (ID ", lifepak_id, ")"),
-                  cum_abs = TRUE)
+lapply(names(pred_error_study_4_thres_a05), function(lifepak_id) {
+  plot_pred_error(pred_error_study_4_thres_a05[[lifepak_id]],
+                  paste0("pred_study_4_thres_a05_error_", lifepak_id),
+                  paste0("Errors for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 
 # ---------------------------------------------------------------------------- #

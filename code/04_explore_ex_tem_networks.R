@@ -686,11 +686,14 @@ pred_400_max_one_0_others_satur <-
 # Plot predicted values ----
 # ---------------------------------------------------------------------------- #
 
-# Define function to plot predicted (green) and observed (black) values, with
-# options of (a) restricting displayed range of time points and (b) using a
-# different color for each iteration of "k" predicted values
+# Define function to plot predicted values starting from one time point or "k" predicted
+# values starting many time points (pred_start_t_points = "one" or "many"). Predicted values 
+# are plotted as (green) lines, points, or both (pred_plot_type = "l", "p", or "b"); observed
+# values are plotted as (black) points. Options include (a) restricting displayed range of 
+# time points (view_t_min and view_t_max) and, for "k" predicted values starting from
+# many time points, (b) using a different color for each iteration (iter_colors = TRUE)
 
-plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title, 
+plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, plot_name, plot_title,
                           view_t_min = NULL, view_t_max = NULL, iter_colors = NULL) {
   obs_df$t <- 1:nrow(obs_df)
   
@@ -703,95 +706,115 @@ plot_pred_obs <- function(pred_df, obs_df, plot_name, plot_title,
   
   # Create plots
   
+  xlab <- "Time"
+  ylab <- "Detrended Value"
+  ylim <- c(-100, 100)
+  lwd <- 1.5
+  pch <- 16
+  
+  if (pred_start_t_points == "one") {
+    color_pred <- "green"
+  } else if (pred_start_t_points == "many") {
+    n_iterations <- max(pred_df$iter)
+    
+    if (is.null(iter_colors)) {
+      color_pred <- rep("green", n_iterations)
+    } else if (iter_colors == TRUE) {
+      color_pred <- distinctColorPalette(n_iterations)
+    }
+  }
+  
+  vars       <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  var_labels <- vars
+  
+  var_labels[var_labels == "bad"]      <- "Bad Self"
+  var_labels[var_labels == "control"]  <- "Lack Control"
+  var_labels[var_labels == "energy"]   <- "Fatigue"
+  var_labels[var_labels == "focus"]    <- "Lack Focus"
+  var_labels[var_labels == "fun"]      <- "Inaction"
+  var_labels[var_labels == "interest"] <- "Lack Interest"
+  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
+  var_labels[var_labels == "sad"]      <- "Sad"
+  
+  pred_cols <- paste0(vars, "_pred")
+  obs_cols  <- paste0(vars, "_d")
+  
   pdf(paste0("./results/pred_values/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
   
-  xlab <- "Time"
-  ylab <- "Detrended Value"
-  pch <- 16
-  ylim <- c(-100, 100)
-  
-  if (is.null(iter_colors)) {
-    col_pred <- "green"
-  } else if (iter_colors == TRUE) {
-    k            <- max(pred_df$iter_t)
-    n_iterations <- max(pred_df$iter)
+  for (i in 1:length(vars)) {
+    pred_col  <- pred_cols[i]
+    obs_col   <- obs_cols[i]
+    var_label <- var_labels[i]
     
-    color_palette <- distinctColorPalette(n_iterations)
-    color_palette <- adjustcolor(color_palette, alpha.f = 0.75)
-    col_pred <- rep(color_palette, each = k)
+    # Start with empty plot
+    
+    plot(pred_df$t, pred_df[, pred_col], main = var_label, 
+         type = "n", xlab = xlab, ylab = ylab, ylim = ylim)
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+    
+    # Plot predicted values
+    
+    if (pred_start_t_points == "one") {
+      if (pred_plot_type        == "l") {
+        lines(pred_df$t,  pred_df[, pred_col], lwd = lwd, col = color_pred)
+      } else if (pred_plot_type == "p") {
+        points(pred_df$t, pred_df[, pred_col], pch = pch, col = color_pred)
+      } else if (pred_plot_type == "b") {
+        lines(pred_df$t,  pred_df[, pred_col], lwd = lwd, col = color_pred)
+        points(pred_df$t, pred_df[, pred_col], pch = pch, col = color_pred)
+      }
+    } else if (pred_start_t_points == "many") {
+      for (j in 1:n_iterations) {
+        iter_pred  <- pred_df[pred_df$iter == j, ]
+        iter_color <- color_pred[j]
+        
+        if (pred_plot_type        == "l") {
+          lines(iter_pred$t,  iter_pred[, pred_col], lwd = lwd, col = iter_color)
+        } else if (pred_plot_type == "p") {
+          points(iter_pred$t, iter_pred[, pred_col], pch = pch, col = iter_color)
+        } else if (pred_plot_type == "b") {
+          lines(iter_pred$t,  iter_pred[, pred_col], lwd = lwd, col = iter_color)
+          points(iter_pred$t, iter_pred[, pred_col], pch = pch, col = iter_color)
+        }
+      }
+    }
+    
+    # Plot observed values as points
+    
+    points(obs_df$t, obs_df[, obs_col])
   }
-  
-  plot(pred_df$t, pred_df$bad_pred,      main = "Bad Self",
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$bad_d)
-  
-  plot(pred_df$t, pred_df$control_pred,  main = "Lack Control",
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$control_d)
-  
-  plot(pred_df$t, pred_df$energy_pred,   main = "Fatigue",
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$energy_d)
-  
-  plot(pred_df$t, pred_df$focus_pred,    main = "Lack Focus",
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$focus_d)
-  
-  mtext(plot_title, side = 3, line = -1, outer = TRUE)
-  
-  plot(pred_df$t, pred_df$fun_pred,      main = "Inaction",  
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$fun_d)
-  
-  plot(pred_df$t, pred_df$interest_pred, main = "Lack Interest",
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$interest_d)
-  
-  plot(pred_df$t, pred_df$movement_pred, main = "Slower or Fidgety",
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$movement_d)
-  
-  plot(pred_df$t, pred_df$sad_pred,      main = "Sad", 
-       xlab = xlab, ylab = ylab, col = col_pred, pch = pch, ylim = ylim)
-  points(obs_df$t, obs_df$sad_d)
-  
-  mtext(plot_title, side = 3, line = -1, outer = TRUE)
   
   par(mfrow = c(1, 1))
   
   dev.off()
 }
 
-# (TODO: Revise filenames for better sorting of outputs) Run function
-
-
-
-
-
 dir.create("./results/pred_values/")
 
   # For all predicted values starting from observed baseline values
 
 lapply(names(pred_study_bl_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "one", "l",
                 paste0("pred_study_bl_thres_a05_", lifepak_id),
                 paste0("Through Study for Thresholded Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_thres_a05),   function(lifepak_id) {
-  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   data_var_ls[[lifepak_id]], "one", "l",
                 paste0("pred_400_bl_thres_a05_",   lifepak_id),
                 paste0("Through 400 for Thresholded Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
 })
 
 lapply(names(pred_study_bl_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "one", "l",
                 paste0("pred_study_bl_satur_",     lifepak_id),
                 paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_satur),       function(lifepak_id) {
-  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       data_var_ls[[lifepak_id]], "one", "l",
                 paste0("pred_400_bl_satur_",       lifepak_id),
                 paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
@@ -799,59 +822,45 @@ lapply(names(pred_400_bl_satur),       function(lifepak_id) {
   # For 4 predicted values starting from each time point
 
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_satur_",                      lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_satur_iter_colors_",          lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_satur_1-50_iter_colors_",     lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
 })
 
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_thres_a05_",                  lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_thres_a05_1-50_iter_colors_", lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
 })
 
-  # For mean of 4 predicted values starting from each time point (excluding observed values)
+# Define function to plot predicted values from various baseline starting points
 
-lapply(names(pred_m_study_4_satur),  function(lifepak_id) {
-  plot_pred_obs(pred_m_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_satur_m_",                    lifepak_id),
-                paste0("Next 3 Through Study for Satur. Starting From Each Obs. Value, Averaged (ID ", lifepak_id, ")"))
-})
-
-lapply(names(pred_m_study_4_thres_a05),  function(lifepak_id) {
-  plot_pred_obs(pred_m_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]],
-                paste0("pred_study_4_thres_a05_m_",                lifepak_id),
-                paste0("Next 3 Through Study for Thres. Starting From Each Obs. Value, Averaged (ID ", lifepak_id, ")"))
-})
-
-# Define function to plot predicted values from various starting points
-
-plot_pred_obs_various_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, data_var_ls, 
-                                        plot_name_stem, thres, plot_title_stem) {
+plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, data_var_ls, 
+                                           plot_name_stem, thres, plot_title_stem) {
   for (i in 1:length(various_pred_lists)) {
     pred_list <- various_pred_lists[[i]]
     pred_list_name <- names(various_pred_lists)[i]
@@ -860,7 +869,7 @@ plot_pred_obs_various_start <- function(various_pred_lists, various_pred_lists_f
     pred_list_plot_title_stem <- sub("pred_list_focal_var_label", pred_list_focal_var_label, plot_title_stem)
     
     lapply(names(pred_list), function(lifepak_id) {
-      plot_pred_obs(pred_list[[lifepak_id]], data_var_ls[[lifepak_id]],
+      plot_pred_obs(pred_list[[lifepak_id]], data_var_ls[[lifepak_id]], "one", "l",
                     paste0(plot_name_stem, "_", pred_list_name, "_", thres, "_", lifepak_id),
                     paste0(pred_list_plot_title_stem, lifepak_id, ")"))
     })
@@ -883,19 +892,19 @@ pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels ==
 
   # Run "plot_pred_obs_various_start()" function
 
-plot_pred_obs_various_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, data_var_ls,
-                            "pred_study_max_one_0_others", "thres_a05",
-                            'Through Study for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
-plot_pred_obs_various_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, data_var_ls,
-                            "pred_400_max_one_0_others",   "thres_a05",
-                            'Through 400 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, data_var_ls,
+                               "pred_study_max_one_0_others", "thres_a05",
+                               'Through Study for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+plot_pred_obs_various_bl_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, data_var_ls,
+                               "pred_400_max_one_0_others",   "thres_a05",
+                               'Through 400 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
-plot_pred_obs_various_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, data_var_ls,
-                            "pred_study_max_one_0_others", "satur",
-                            'Through Study for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
-plot_pred_obs_various_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, data_var_ls,
-                            "pred_400_max_one_0_others",   "satur",
-                            'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, data_var_ls,
+                               "pred_study_max_one_0_others", "satur",
+                               'Through Study for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
+plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, data_var_ls,
+                               "pred_400_max_one_0_others",   "satur",
+                               'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
 # ---------------------------------------------------------------------------- #
 # Plot prediction errors  ----

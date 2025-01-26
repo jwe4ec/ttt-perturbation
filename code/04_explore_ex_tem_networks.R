@@ -535,40 +535,49 @@ compute_pred_error <- function(part_data, pred) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Define function to compute R^2 at each "iter_t" ----
+# Define function to compute "diff_over_obs_sd" at each "iter_t" ----
 # ---------------------------------------------------------------------------- #
 
-# Define function to compute R^2 at each "iter_t" for "k" predicted values
-# starting from each time point
+# Define function to compute "diff_over_obs_sd", or (SD of observed data - SD of
+# signed prediction errors) / SD of observed data, at each "iter_t" for "k" predicted 
+# values starting from each time point
 
-compute_R2 <- function(pred_error) {
+compute_diff_over_obs_sd <- function(pred_error) {
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
-  obs_cols   <- paste0(vars, "_d")
-  error_cols <- paste0(vars, "_error")
+  iter_t_values <- unique(pred_error$iter_t)
   
-  for (var in vars) {
-    # TODO: Consider aggregate(), and consider missing predicted and observed values
+  res <- data.frame(iter_t = iter_t_values)
+  
+  for (iter_t in iter_t_values) {
+    pred_error_iter_t <- pred_error[pred_error$iter_t == iter_t, ]
     
-    
-    
-    
-    
-    # pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
+    for (var in vars) {
+      obs_col   <- paste0(var, "_d")
+      error_col <- paste0(var, "_error")
+      
+      # Restrict to rows where variable's prediction errors could be computed
+      
+      pred_error_iter_t_var <- pred_error_iter_t[!is.na(pred_error_iter_t[, error_col]), ]
+      
+      n_errors <- nrow(pred_error_iter_t_var)
+      
+      obs_sd   <- sd(pred_error_iter_t_var[, obs_col])
+      error_sd <- sd(pred_error_iter_t_var[, error_col])
+      
+      diff_over_obs_sd <- (obs_sd - error_sd) / obs_sd
+      
+      res[res$iter_t == iter_t, paste0(var, "_n_errors")]         <- n_errors
+      res[res$iter_t == iter_t, paste0(obs_col,   "_sd")]         <- obs_sd
+      res[res$iter_t == iter_t, paste0(error_col, "_sd")]         <- error_sd
+      res[res$iter_t == iter_t, paste0(var, "_diff_over_obs_sd")] <- diff_over_obs_sd
+    }
   }
   
-  
+  res <- round(res, 3)
+
+  return(res)
 }
-
-# TODO: Test above
-
-R2_study_4_satur <- compute_R2(pred_error_study_4_satur)
-
-View(pred_error_study_4_satur[[1]])
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Compute 4 predicted values starting from participant's detrended values at each time point ----
@@ -600,7 +609,11 @@ pred_error_study_4_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) 
 names(pred_error_study_4_satur)     <- names(data_var_ls)
 names(pred_error_study_4_thres_a05) <- names(data_var_ls)
 
-# TODO: Compute R^2 at each "iter_t"
+# TODO (some "diff_over_obs_sd" values are negative because sometimes "error_sd" is 
+# greater than "obs_sd"): Compute "diff_over_obs_sd" at each "iter_t"
+
+diff_over_obs_sd_study_4_satur     <- lapply(pred_error_study_4_satur,     compute_diff_over_obs_sd)
+diff_over_obs_sd_study_4_thres_a05 <- lapply(pred_error_study_4_thres_a05, compute_diff_over_obs_sd)
 
 
 

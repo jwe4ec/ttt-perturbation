@@ -994,6 +994,76 @@ lapply(names(pred_error_study_4_thres_a05), function(lifepak_id) {
 })
 
 # ---------------------------------------------------------------------------- #
+# Plot "diff_over_obs_sd" at each "iter_t" ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to plot "diff_over_obs_sd" at each "iter_t" for "k" predicted
+# values starting from each time point
+
+plot_diff_over_obs_sd <- function(diff_over_obs_sd, plot_name, plot_title) {
+  diff_over_obs_sd$t_from_start <- NA
+  diff_over_obs_sd$t_from_start <- diff_over_obs_sd$iter_t - 1
+  
+  t_from_start_values <- unique(diff_over_obs_sd$t_from_start)
+  
+  xlab <- "Time Points From Starting Time Point"
+  ylab <- expression((italic("SD")["Data"] - italic("SD")["Pred. Errors"]) / italic("SD")[Data])
+  ylim <- c(-2, 2)
+
+  vars       <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  var_labels <- vars
+  
+  var_labels[var_labels == "bad"]      <- "Bad Self"
+  var_labels[var_labels == "control"]  <- "Lack Control"
+  var_labels[var_labels == "energy"]   <- "Fatigue"
+  var_labels[var_labels == "focus"]    <- "Lack Focus"
+  var_labels[var_labels == "fun"]      <- "Inaction"
+  var_labels[var_labels == "interest"] <- "Lack Interest"
+  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
+  var_labels[var_labels == "sad"]      <- "Sad"
+  
+  pdf(paste0("./results/diff_over_obs_sd/", plot_name, ".pdf"))
+  
+  par(mfrow = c(2, 2))
+  
+  for (i in 1:length(vars)) {
+    var       <- vars[i]
+    var_label <- var_labels[i]
+    
+    plot(diff_over_obs_sd$t_from_start, diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")],
+         main = var_label, type = "b", xlab = xlab, ylab = ylab, ylim = ylim, pch = 16, xaxt = "n")
+    axis(1, at = t_from_start_values, labels = t_from_start_values)
+    text(diff_over_obs_sd$t_from_start, diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")], 
+         diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")], pos = 3, cex = 0.55, col = "blue")
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  }
+
+  par(mfrow = c(1, 1))
+  
+  dev.off()
+}
+
+# Run function
+
+dir.create("./results/diff_over_obs_sd/")
+
+  # For 4 predicted values starting from each time point
+
+lapply(names(diff_over_obs_sd_study_4_satur),     function(lifepak_id) {
+  plot_diff_over_obs_sd(diff_over_obs_sd_study_4_satur[[lifepak_id]],
+    paste0("diff_over_obs_sd_study_4_satur_", lifepak_id),
+    paste0("Fit for Next 3 Through Study for Satur. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+})
+
+lapply(names(diff_over_obs_sd_study_4_thres_a05), function(lifepak_id) {
+  plot_diff_over_obs_sd(diff_over_obs_sd_study_4_thres_a05[[lifepak_id]],
+    paste0("diff_over_obs_sd_study_4_thres_a05_", lifepak_id),
+    paste0("Fit for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+})
+
+# ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----
 # ---------------------------------------------------------------------------- #
 

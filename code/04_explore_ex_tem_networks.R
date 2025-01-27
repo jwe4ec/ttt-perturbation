@@ -930,46 +930,34 @@ plot_pred_error <- function(pred_error, plot_name, plot_title) {
   col  <- "red"
   pch  <- 16
   
+  vars       <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  var_labels <- vars
+  
+  var_labels[var_labels == "bad"]      <- "Bad Self"
+  var_labels[var_labels == "control"]  <- "Lack Control"
+  var_labels[var_labels == "energy"]   <- "Fatigue"
+  var_labels[var_labels == "focus"]    <- "Lack Focus"
+  var_labels[var_labels == "fun"]      <- "Inaction"
+  var_labels[var_labels == "interest"] <- "Lack Interest"
+  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
+  var_labels[var_labels == "sad"]      <- "Sad"
+  
   pdf(paste0("./results/pred_error/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
   
-  plot(pred_error$t_from_start, pred_error$bad_error,      main = "Bad Self",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  plot(pred_error$t_from_start, pred_error$control_error,  main = "Lack Control",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  plot(pred_error$t_from_start, pred_error$energy_error,   main = "Fatigue",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  plot(pred_error$t_from_start, pred_error$focus_error,    main = "Lack Focus",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  for (i in 1:length(vars)) {
+    var       <- vars[i]
+    var_label <- var_labels[i]
+    
+    plot(pred_error$t_from_start, pred_error[, paste0(var, "_error")], main = var_label,
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+    axis(1, at = t_from_start_values, labels = t_from_start_values)
 
-  plot(pred_error$t_from_start, pred_error$fun_error,      main = "Inaction",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+  }
   
-  plot(pred_error$t_from_start, pred_error$interest_error, main = "Lack Interest",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  plot(pred_error$t_from_start, pred_error$movement_error, main = "Slower or Fidgety",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  plot(pred_error$t_from_start, pred_error$sad_error,      main = "Sad",
-       xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
-  axis(1, at = t_from_start_values, labels = t_from_start_values)
-  
-  mtext(plot_title, side = 3, line = -1, outer = TRUE)
-
   par(mfrow = c(1, 1))
 
   dev.off()
@@ -983,14 +971,14 @@ dir.create("./results/pred_error/")
 
 lapply(names(pred_error_study_4_satur),     function(lifepak_id) {
   plot_pred_error(pred_error_study_4_satur[[lifepak_id]],
-                  paste0("pred_study_4_satur_error_", lifepak_id),
-                  paste0("Errors for Next 3 Through Study for Satur. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+    paste0("pred_study_4_satur_error_", lifepak_id),
+    paste0("Errors for Next 3 Through Study for Satur. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 
 lapply(names(pred_error_study_4_thres_a05), function(lifepak_id) {
   plot_pred_error(pred_error_study_4_thres_a05[[lifepak_id]],
-                  paste0("pred_study_4_thres_a05_error_", lifepak_id),
-                  paste0("Errors for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+    paste0("pred_study_4_thres_a05_error_", lifepak_id),
+    paste0("Errors for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 
 # ---------------------------------------------------------------------------- #
@@ -1031,11 +1019,13 @@ plot_diff_over_obs_sd <- function(diff_over_obs_sd, plot_name, plot_title) {
     var       <- vars[i]
     var_label <- var_labels[i]
     
-    plot(diff_over_obs_sd$t_from_start, diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")],
-         main = var_label, type = "b", xlab = xlab, ylab = ylab, ylim = ylim, pch = 16, xaxt = "n")
+    x <- diff_over_obs_sd$t_from_start
+    y <- diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")]
+    
+    plot(x, y, main = var_label,
+         type = "b", xlab = xlab, ylab = ylab, ylim = ylim, pch = 16, xaxt = "n")
     axis(1, at = t_from_start_values, labels = t_from_start_values)
-    text(diff_over_obs_sd$t_from_start, diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")], 
-         diff_over_obs_sd[, paste0(var, "_diff_over_obs_sd")], pos = 3, cex = 0.55, col = "blue")
+    text(x, y, y, pos = 3, cex = 0.55, col = "blue")
     
     mtext(plot_title, side = 3, line = -1, outer = TRUE)
   }

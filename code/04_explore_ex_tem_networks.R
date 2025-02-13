@@ -28,7 +28,7 @@ groundhog_day <- version_control()
 
 # Load packages and set seed
 
-pkgs <- c("qgraph", "randomcoloR")
+pkgs <- c("qgraph", "randomcoloR", "tidyr", "ggplot2", "cowplot")
 groundhog.library(pkgs, groundhog_day)
 
 set.seed(1234)
@@ -215,13 +215,63 @@ q1 == 74
 
 q1_ids <- names(data_var_ls)[unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))) < q1]
 
-# TODO: Adjust to presence/absence plot with a row for each node
+# Define function to create presence/absence plot with row for each node
 
-plot(data_var_ls[["163152"]]$bin_no_adj, is.na(data_var_ls[["163152"]]$bad_d))
+plot_presence <- function(part_data, lifepak_id) {
+  target_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_d")
+  
+  plot_data <- part_data[, c("lifepak_id", "bin_no_adj", target_cols)]
+  
+  plot_data <- pivot_longer(plot_data, all_of(target_cols), names_to = "variable")
+  
+  plot_data$present <- !(is.na(plot_data$value))
+  
+  ggplot(plot_data, aes(x = bin_no_adj, y = variable, fill = present)) +
+    geom_tile(color = "white") +
+    scale_fill_manual(values = c("#F0F0F0", "black")) +
+    theme_classic() +
+    labs(x = "Time", y = "Variable", fill = "Present",
+         title = paste0("ID ", lifepak_id))
+}
 
+# Run function for participants in first quartile of number of observations
 
+missing_data_plots_path <- "./results/missing_data_plots/"
 
+dir.create(missing_data_plots_path)
 
+pdf(file = paste0(missing_data_plots_path, "presence_q1_ids.pdf"))
+
+data_var_ls_q1_ids <- data_var_ls[q1_ids]
+
+plot_ls <- lapply(names(data_var_ls_q1_ids), function(lifepak_id) {
+  plot_presence(data_var_ls_q1_ids[[lifepak_id]], lifepak_id)
+})
+
+  # Extract legend from first plot for shared legend
+
+legend_bottom <- get_legend(plot_ls[[1]] + 
+                              guides(color = guide_legend(nrow = 1)) +
+                              theme(legend.position = "bottom"))
+
+plot_ls <- lapply(plot_ls, function(plot) {
+  plot <- plot + theme(legend.position = "none")
+})
+
+  # TODO (Condense code; "for" loop didn't work): Include 6 plots per page
+
+pages_with_plots <- split(1:length(plot_ls), ceiling(1:length(plot_ls) / 6))
+
+plots <- plot_grid(plotlist = plot_ls[pages_with_plots[[1]]], ncol = 2, nrow = 3)
+plot_grid(plots, legend_bottom, ncol = 1, rel_heights = c(1, .1))
+
+plots <- plot_grid(plotlist = plot_ls[pages_with_plots[[2]]], ncol = 2, nrow = 3)
+plot_grid(plots, legend_bottom, ncol = 1, rel_heights = c(1, .1))
+
+plots <- plot_grid(plotlist = plot_ls[pages_with_plots[[3]]], ncol = 2, nrow = 3)
+plot_grid(plots, legend_bottom, ncol = 1, rel_heights = c(1, .1))
+
+dev.off()
 
 # TODO: Compute distance between each observation in time and then plot distribution.
 # Consider relevant summary statistics.

@@ -39,7 +39,9 @@ set.seed(1234)
 
 # Data
 
-load("./data/from_ttt-p1-main-analysis/final_clean/data_var.RDS")
+load("./data/from_ttt-p1-main-analysis/final_clean/data_var_perturb.RDS")
+
+dat <- data_var_perturb
 
 # Temporal results from idiographic VAR models
 
@@ -183,26 +185,26 @@ thres_adj_mats_var_sig_freq_range
 # Explore number of observations ----
 # ---------------------------------------------------------------------------- #
 
-data_var <- as.data.frame(data_var)
+dat <- as.data.frame(dat)
 
 # Identify approximate number of observations
 
-sum(!is.na(data_var[data_var$lifepak_id == high_sig_edges_ex_id, "bad"])) == 98
-sum(!is.na(data_var[data_var$lifepak_id == med_sig_edges_ex_id, "bad"])) == 93
-sum(!is.na(data_var[data_var$lifepak_id == low_sig_edges_ex_id, "bad"])) == 82
+sum(!is.na(dat[dat$lifepak_id == high_sig_edges_ex_id, "bad"])) == 98
+sum(!is.na(dat[dat$lifepak_id == med_sig_edges_ex_id, "bad"])) == 93
+sum(!is.na(dat[dat$lifepak_id == low_sig_edges_ex_id, "bad"])) == 82
 
 # Identify distribution of approximate number of observations (range: 62-102, median: 86)
 
-data_var_ls <- split(data_var, data_var$lifepak_id)
+dat_ls <- split(dat, dat$lifepak_id)
 
-hist(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))),
+hist(unlist(lapply(dat_ls, function(x) sum(!is.na(x$bad_d)))),
      main = "Distribution of Number of Observations",
      xlab = "Number of Observations",
      ylab = "Number of Participants",
      xlim = c(60, 105))
 
-all(range(unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))))      == c(62, 102))
-median(unlist(lapply(data_var_ls,    function(x) sum(!is.na(x$bad_d)))))      == 86
+all(range(unlist(lapply(dat_ls, function(x) sum(!is.na(x$bad_d)))))      == c(62, 102))
+median(unlist(lapply(dat_ls,    function(x) sum(!is.na(x$bad_d)))))      == 86
 
 # ---------------------------------------------------------------------------- #
 # Investigate missing data patterns ----
@@ -210,10 +212,10 @@ median(unlist(lapply(data_var_ls,    function(x) sum(!is.na(x$bad_d)))))      ==
 
 # Plot observations over time for participants in first quartile of number of observations (74)
 
-q1 <- quantile(unlist(lapply(data_var_ls,  function(x) sum(!is.na(x$bad_d)))), .25)
+q1 <- quantile(unlist(lapply(dat_ls,  function(x) sum(!is.na(x$bad_d)))), .25)
 q1 == 74
 
-q1_ids <- names(data_var_ls)[unlist(lapply(data_var_ls, function(x) sum(!is.na(x$bad_d)))) < q1]
+q1_ids <- names(dat_ls)[unlist(lapply(dat_ls, function(x) sum(!is.na(x$bad_d)))) < q1]
 
 # Define function to create presence/absence plot with row for each node
 
@@ -242,10 +244,10 @@ dir.create(missing_data_plots_path)
 
 pdf(file = paste0(missing_data_plots_path, "presence_q1_ids.pdf"))
 
-data_var_ls_q1_ids <- data_var_ls[q1_ids]
+dat_ls_q1_ids <- dat_ls[q1_ids]
 
-plot_ls <- lapply(names(data_var_ls_q1_ids), function(lifepak_id) {
-  plot_presence(data_var_ls_q1_ids[[lifepak_id]], lifepak_id)
+plot_ls <- lapply(names(dat_ls_q1_ids), function(lifepak_id) {
+  plot_presence(dat_ls_q1_ids[[lifepak_id]], lifepak_id)
 })
 
   # Extract legend from first plot for shared legend
@@ -297,7 +299,7 @@ compute_bin_no_adj_present_diff_m_overall <- function(part_data) {
 
 # Run function for all participants
 
-bin_no_adj_present_diff_m_overall <- unlist(lapply(data_var_ls, 
+bin_no_adj_present_diff_m_overall <- unlist(lapply(dat_ls, 
                                                    compute_bin_no_adj_present_diff_m_overall))
 
 # Plot distribution. Participants with fewest observations (< Q1) are same as those
@@ -324,7 +326,7 @@ all(q1_ids %in% q3_ids)
 
 retain_ids <- c(high_sig_edges_ex_id, med_sig_edges_ex_id, low_sig_edges_ex_id)
 
-data_var_ls <- data_var_ls[retain_ids]
+dat_ls <- dat_ls[retain_ids]
 
 thres_adj_mats_var <- thres_adj_mats_var[retain_ids]
 satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
@@ -338,27 +340,27 @@ satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
 # Before detrending
 
 # par(mfrow = c(4, 2))
-# hist(data_var_ls[[high_sig_edges_ex_id]]$bad)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$control)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$energy)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$focus)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$fun)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$interest)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$movement)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$sad)
+# hist(dat_ls[[high_sig_edges_ex_id]]$bad)
+# hist(dat_ls[[high_sig_edges_ex_id]]$control)
+# hist(dat_ls[[high_sig_edges_ex_id]]$energy)
+# hist(dat_ls[[high_sig_edges_ex_id]]$focus)
+# hist(dat_ls[[high_sig_edges_ex_id]]$fun)
+# hist(dat_ls[[high_sig_edges_ex_id]]$interest)
+# hist(dat_ls[[high_sig_edges_ex_id]]$movement)
+# hist(dat_ls[[high_sig_edges_ex_id]]$sad)
 # par(mfrow = c(1, 1))
 
 # After detrending
 
 # par(mfrow = c(4, 2))
-# hist(data_var_ls[[high_sig_edges_ex_id]]$bad_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$control_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$energy_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$focus_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$fun_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$interest_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$movement_d)
-# hist(data_var_ls[[high_sig_edges_ex_id]]$sad_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$bad_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$control_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$energy_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$focus_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$fun_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$interest_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$movement_d)
+# hist(dat_ls[[high_sig_edges_ex_id]]$sad_d)
 # par(mfrow = c(1, 1))
 
 # Not done for example participants with medium or low numbers of significant edges
@@ -531,11 +533,11 @@ define_start <- function(part_data, j) {
 
 # Compute number of study time points for each participant
 
-n_study_timepoints <- lapply(data_var_ls, nrow)
+n_study_timepoints <- lapply(dat_ls, nrow)
 
 # Define starting values for each participant from detrended values at baseline
 
-start_list_bl <- lapply(data_var_ls, define_start, 1)
+start_list_bl <- lapply(dat_ls, define_start, 1)
 
 # Compute predicted values for thresholded and saturated networks (a) over study 
 # period and (b) into future 
@@ -668,11 +670,11 @@ compute_diff_over_obs_sd <- function(pred_error) {
 # Compute predicted values for saturated and thresholded networks over study period
 
 pred_study_4_satur     <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
-  compute_k_pred(data_var_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+  compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
 })
 
 pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
-  compute_k_pred(data_var_ls[[lifepak_id]], thres_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+  compute_k_pred(dat_ls[[lifepak_id]], thres_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
 })
 
 names(pred_study_4_satur)     <- names(satur_adj_mats_var)
@@ -680,16 +682,16 @@ names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 
 # Compute signed prediction error
 
-pred_error_study_4_satur     <- lapply(names(data_var_ls), function(lifepak_id) {
-  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_4_satur[[lifepak_id]])
+pred_error_study_4_satur     <- lapply(names(dat_ls), function(lifepak_id) {
+  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_satur[[lifepak_id]])
 })
 
-pred_error_study_4_thres_a05 <- lapply(names(data_var_ls), function(lifepak_id) {
-  compute_pred_error(data_var_ls[[lifepak_id]], pred_study_4_thres_a05[[lifepak_id]])
+pred_error_study_4_thres_a05 <- lapply(names(dat_ls), function(lifepak_id) {
+  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_thres_a05[[lifepak_id]])
 })
 
-names(pred_error_study_4_satur)     <- names(data_var_ls)
-names(pred_error_study_4_thres_a05) <- names(data_var_ls)
+names(pred_error_study_4_satur)     <- names(dat_ls)
+names(pred_error_study_4_thres_a05) <- names(dat_ls)
 
 # TODO (some "diff_over_obs_sd" values are negative because sometimes "error_sd" is 
 # greater than "obs_sd"): Compute "diff_over_obs_sd" at each "iter_t"
@@ -730,7 +732,7 @@ define_start_max_one_0_others <- function(part_data) {
   return(start_list_max_one_0_others)
 }
 
-start_list_max_one_0_others <- lapply(data_var_ls, define_start_max_one_0_others)
+start_list_max_one_0_others <- lapply(dat_ls, define_start_max_one_0_others)
 
 # Define function to compute predicted values from various starting values
 
@@ -885,23 +887,23 @@ dir.create("./results/pred_values/")
   # For all predicted values starting from observed baseline values
 
 lapply(names(pred_study_bl_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "one", "l",
                 paste0("pred_study_bl_thres_a05_", lifepak_id),
                 paste0("Through Study for Thresholded Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_thres_a05),   function(lifepak_id) {
-  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   data_var_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   dat_ls[[lifepak_id]], "one", "l",
                 paste0("pred_400_bl_thres_a05_",   lifepak_id),
                 paste0("Through 400 for Thresholded Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
 })
 
 lapply(names(pred_study_bl_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "one", "l",
                 paste0("pred_study_bl_satur_",     lifepak_id),
                 paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_satur),       function(lifepak_id) {
-  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       data_var_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       dat_ls[[lifepak_id]], "one", "l",
                 paste0("pred_400_bl_satur_",       lifepak_id),
                 paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
@@ -909,36 +911,36 @@ lapply(names(pred_400_bl_satur),       function(lifepak_id) {
   # For 4 predicted values starting from each time point
 
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_satur_",                      lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_satur_iter_colors_",          lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     data_var_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_satur_1-50_iter_colors_",     lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
 })
 
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_thres_a05_",                  lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], data_var_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "many", "l",
                 paste0("pred_study_4_thres_a05_1-50_iter_colors_", lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
@@ -946,7 +948,7 @@ lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
 
 # Define function to plot predicted values from various baseline starting points
 
-plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, data_var_ls, 
+plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, dat_ls, 
                                            plot_name_stem, thres, plot_title_stem) {
   for (i in 1:length(various_pred_lists)) {
     pred_list <- various_pred_lists[[i]]
@@ -956,7 +958,7 @@ plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_list
     pred_list_plot_title_stem <- sub("pred_list_focal_var_label", pred_list_focal_var_label, plot_title_stem)
     
     lapply(names(pred_list), function(lifepak_id) {
-      plot_pred_obs(pred_list[[lifepak_id]], data_var_ls[[lifepak_id]], "one", "l",
+      plot_pred_obs(pred_list[[lifepak_id]], dat_ls[[lifepak_id]], "one", "l",
                     paste0(plot_name_stem, "_", pred_list_name, "_", thres, "_", lifepak_id),
                     paste0(pred_list_plot_title_stem, lifepak_id, ")"))
     })
@@ -979,17 +981,17 @@ pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels ==
 
   # Run "plot_pred_obs_various_start()" function
 
-plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, data_var_ls,
+plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, dat_ls,
                                "pred_study_max_one_0_others", "thres_a05",
                                'Through Study for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
-plot_pred_obs_various_bl_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, data_var_ls,
+plot_pred_obs_various_bl_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, dat_ls,
                                "pred_400_max_one_0_others",   "thres_a05",
                                'Through 400 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
-plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, data_var_ls,
+plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, dat_ls,
                                "pred_study_max_one_0_others", "satur",
                                'Through Study for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
-plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, data_var_ls,
+plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, dat_ls,
                                "pred_400_max_one_0_others",   "satur",
                                'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 

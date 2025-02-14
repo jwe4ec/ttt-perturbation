@@ -57,6 +57,12 @@ load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
 load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
 
 # ---------------------------------------------------------------------------- #
+# Compute day of "response_time" ----
+# ---------------------------------------------------------------------------- #
+
+dat$response_time_wday <- weekdays(as.Date(dat$response_time))
+
+# ---------------------------------------------------------------------------- #
 # Explore number of significant autoregressive and cross-lagged effects ----
 # ---------------------------------------------------------------------------- #
 
@@ -1136,6 +1142,16 @@ lapply(names(diff_over_obs_sd_study_4_thres_a05), function(lifepak_id) {
     paste0("diff_over_obs_sd_study_4_thres_a05_", lifepak_id),
     paste0("Fit for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
+
+# ---------------------------------------------------------------------------- #
+# TODO: Overlay day of week to plots of predicted values to explore weekend effects ----
+# ---------------------------------------------------------------------------- #
+
+# TODO
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

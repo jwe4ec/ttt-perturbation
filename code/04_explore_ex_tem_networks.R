@@ -273,12 +273,44 @@ plot_grid(plots, legend_bottom, ncol = 1, rel_heights = c(1, .1))
 
 dev.off()
 
-# TODO: Compute distance between each observation in time and then plot distribution.
-# Consider relevant summary statistics.
+# TODO (Consider computing without missing observations at night): Define function 
+# to compute overall mean of each node's mean units of "bin_no_adj" between each 
+# observation (including missing observations at night)
 
+compute_bin_no_adj_present_diff_m_overall <- function(part_data) {
+  target_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_d")
+  
+  bin_no_adj_present <- list()
+  
+  for (target_col in target_cols) {
+    bin_no_adj_present[[target_col]] <- part_data$bin_no_adj[!is.na(part_data[, target_col])]
+  }
+  
+  bin_no_adj_present_diff <- lapply(bin_no_adj_present, diff)
+  
+  bin_no_adj_present_diff_m <- lapply(bin_no_adj_present_diff, mean)
+  
+  bin_no_adj_present_diff_m_overall <- mean(unlist(bin_no_adj_present_diff_m))
+  
+  return(bin_no_adj_present_diff_m_overall)
+}
 
+# Run function for all participants
 
+bin_no_adj_present_diff_m_overall <- unlist(lapply(data_var_ls, 
+                                                   compute_bin_no_adj_present_diff_m_overall))
 
+# Plot distribution. Participants with fewest observations (< Q1) are same as those
+# with greatest distance (> Q3) between each observation
+
+hist(bin_no_adj_present_diff_m_overall)
+
+q3 <- quantile(bin_no_adj_present_diff_m_overall, .75)
+round(q3, 5) == 2.69863
+
+q3_ids <- names(bin_no_adj_present_diff_m_overall)[bin_no_adj_present_diff_m_overall > q3]
+
+all(q1_ids %in% q3_ids)
 
 # ---------------------------------------------------------------------------- #
 # Restrict to example participants ----

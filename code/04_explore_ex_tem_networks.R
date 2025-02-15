@@ -57,10 +57,18 @@ load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
 load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
 
 # ---------------------------------------------------------------------------- #
-# Compute day of "response_time" ----
+# Compute day of "response_time" and weekend indicator ----
 # ---------------------------------------------------------------------------- #
 
 dat$response_time_wday <- weekdays(as.Date(dat$response_time))
+
+# Compute weekend indicator (use 100 for plotting)
+
+wend_days <- c("Saturday", "Sunday")
+
+dat$response_time_wend[dat$response_time_wday %in% wend_days]    <- 100
+dat$response_time_wend[!(dat$response_time_wday %in% wend_days)] <- 0
+dat$response_time_wend[is.na(dat$response_time_wday)]            <- NA
 
 # ---------------------------------------------------------------------------- #
 # Explore number of significant autoregressive and cross-lagged effects ----
@@ -881,6 +889,12 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
     # Plot observed values as points
     
     points(obs_df$t, obs_df[, obs_col])
+    
+    # TODO (Consider making this optional): Overlay weekend indicator to explore weekend effects
+    
+    text(x = 0, y = 100, labels = "W:", cex = .5)
+    
+    points(obs_df$t, obs_df$response_time_wend, pch = 95, cex = .6)
   }
   
   par(mfrow = c(1, 1))
@@ -1142,16 +1156,6 @@ lapply(names(diff_over_obs_sd_study_4_thres_a05), function(lifepak_id) {
     paste0("diff_over_obs_sd_study_4_thres_a05_", lifepak_id),
     paste0("Fit for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
-
-# ---------------------------------------------------------------------------- #
-# TODO: Overlay day of week to plots of predicted values to explore weekend effects ----
-# ---------------------------------------------------------------------------- #
-
-# TODO
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

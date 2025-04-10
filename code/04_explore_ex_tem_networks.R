@@ -336,12 +336,6 @@ q3_ids <- names(bin_no_adj_present_diff_m_overall)[bin_no_adj_present_diff_m_ove
 
 all(q1_ids %in% q3_ids)
 
-# TODO: Try to predict missingness by weekend (0 for weekday, 1 for weekend)
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Restrict to example participants ----
 # ---------------------------------------------------------------------------- #
@@ -358,6 +352,36 @@ dat_ls <- dat_ls[retain_ids]
 
 thres_adj_mats_var <- thres_adj_mats_var[retain_ids]
 satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
+
+# ---------------------------------------------------------------------------- #
+# Test whether weekend indicator predicts missingness ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Define function to test whether weekend indicator predicts missingness. For 
+# now, use presence/absence of "bad_d" as a proxy for that of all node variables.
+
+test_wend_miss <- function(part_data) {
+  part_data$bad_miss <- NA
+  
+  part_data$bad_miss <- as.integer(is.na(part_data$bad))
+  
+  # TODO: First need to fill in "response_time_wday" and "response_time_wend" above
+
+  # TODO: Test whether weekend indicator (0 for weekday, 1 for weekend) predicts missingness
+  
+}
+
+
+
+
+
+# TODO: Run function
+
+lapply(dat_ls, test_wend_miss)
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Explore item distributions ----

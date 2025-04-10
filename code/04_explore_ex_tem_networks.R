@@ -10,6 +10,14 @@
 # Before running script, restart R (CTRL+SHIFT+F10 on Windows) and set working 
 # directory to parent folder
 
+# TODO: Move computation of weekend indicator to separate script
+# TODO: Add weekend indicator to detrending model in separate script (i.e.,
+# node variable ~ bin_no_adj + weekend) then refit network on those residuals
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Store working directory, check correct R version, load packages ----
 # ---------------------------------------------------------------------------- #
@@ -62,11 +70,11 @@ load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
 
 dat$response_time_wday <- weekdays(as.Date(dat$response_time))
 
-# Compute weekend indicator (use 100 for plotting)
+# Compute weekend indicator
 
 wend_days <- c("Saturday", "Sunday")
 
-dat$response_time_wend[dat$response_time_wday %in% wend_days]    <- 100
+dat$response_time_wend[dat$response_time_wday %in% wend_days]    <- 1
 dat$response_time_wend[!(dat$response_time_wday %in% wend_days)] <- 0
 dat$response_time_wend[is.na(dat$response_time_wday)]            <- NA
 
@@ -328,6 +336,12 @@ q3_ids <- names(bin_no_adj_present_diff_m_overall)[bin_no_adj_present_diff_m_ove
 
 all(q1_ids %in% q3_ids)
 
+# TODO: Try to predict missingness by weekend (0 for weekday, 1 for weekend)
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Restrict to example participants ----
 # ---------------------------------------------------------------------------- #
@@ -461,8 +475,36 @@ lapply(names(satur_adj_mats_var), function(lifepak_id) {
 })
 
 # ---------------------------------------------------------------------------- #
+# Compute standardized detrended variables ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to standardize detrended variables
+
+compute_d_std_vars <- function(part_data) {
+  d_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_d")
+  
+  for (d_col in d_cols) {
+    d_std_col <- paste0(d_col, "_std")
+    
+    part_data[, d_std_col] <- as.numeric(scale(part_data[, d_col]))
+  }
+  
+  return(part_data)
+}
+
+# Run function
+
+dat_ls <- lapply(dat_ls, compute_d_std_vars)
+
+# ---------------------------------------------------------------------------- #
 # Define function to compute predicted values ----
 # ---------------------------------------------------------------------------- #
+
+# TODO: Try streamlining this by multiplying adjacency matrix by vector of starting values
+
+
+
+
 
 # Define function to compute predicted values over desired time points from adjacency 
 # matrix and desired starting values
@@ -527,18 +569,18 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 # Define function for defining starting values from detrended values in data ----
 # ---------------------------------------------------------------------------- #
 
-# Define function for defining starting values from participant's detrended values 
-# in data at a given time point "j"
+# Define function for defining starting values from participant's standardized 
+# detrended values in data at a given time point "j"
 
 define_start <- function(part_data, j) {
-  start_list <- list(bad      = part_data[j, "bad_d"],
-                     control  = part_data[j, "control_d"],
-                     energy   = part_data[j, "energy_d"],
-                     focus    = part_data[j, "focus_d"],
-                     fun      = part_data[j, "fun_d"],
-                     interest = part_data[j, "interest_d"],
-                     movement = part_data[j, "movement_d"],
-                     sad      = part_data[j, "sad_d"])
+  start_list <- list(bad      = part_data[j, "bad_d_std"],
+                     control  = part_data[j, "control_d_std"],
+                     energy   = part_data[j, "energy_d_std"],
+                     focus    = part_data[j, "focus_d_std"],
+                     fun      = part_data[j, "fun_d_std"],
+                     interest = part_data[j, "interest_d_std"],
+                     movement = part_data[j, "movement_d_std"],
+                     sad      = part_data[j, "sad_d_std"])
 }
 
 # ---------------------------------------------------------------------------- #
@@ -617,7 +659,7 @@ compute_pred_error <- function(part_data, pred) {
   
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
-  target_cols <- paste0(vars, "_d")
+  target_cols <- paste0(vars, "_d_std")
   part_data_tmp <- part_data[, c("t", target_cols)]
   
   pred <- merge(pred, part_data_tmp, by = "t", all.x = TRUE)
@@ -626,7 +668,7 @@ compute_pred_error <- function(part_data, pred) {
   # Compute signed prediction error
   
   for (var in vars) {
-    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d")] - pred[, paste0(var, "_pred")]
+    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d_std")] - pred[, paste0(var, "_pred")]
   }
   
   return(pred)
@@ -651,7 +693,7 @@ compute_diff_over_obs_sd <- function(pred_error) {
     pred_error_iter_t <- pred_error[pred_error$iter_t == iter_t, ]
     
     for (var in vars) {
-      obs_col   <- paste0(var, "_d")
+      obs_col   <- paste0(var, "_d_std")
       error_col <- paste0(var, "_error")
       
       # Restrict to rows where variable's prediction errors could be computed
@@ -731,17 +773,17 @@ define_start_max_one_0_others <- function(part_data) {
   start_list_max_one_0_others_element[ ] <- 0
   
   start_list_max_one_0_others <- vector("list", length = length(vars))
-  names(start_list_max_one_0_others) <- paste0("max_", vars, "_d")
+  names(start_list_max_one_0_others) <- paste0("max_", vars, "_d_std")
   start_list_max_one_0_others[ ] <- list(start_list_max_one_0_others_element)
   
-  start_list_max_one_0_others$max_bad_d$bad           <- max(part_data["bad_d"],      na.rm = TRUE)
-  start_list_max_one_0_others$max_control_d$control   <- max(part_data["control_d"],  na.rm = TRUE)
-  start_list_max_one_0_others$max_energy_d$energy     <- max(part_data["energy_d"],   na.rm = TRUE)
-  start_list_max_one_0_others$max_focus_d$focus       <- max(part_data["focus_d"],    na.rm = TRUE)
-  start_list_max_one_0_others$max_fun_d$fun           <- max(part_data["fun_d"],      na.rm = TRUE)
-  start_list_max_one_0_others$max_interest_d$interest <- max(part_data["interest_d"], na.rm = TRUE)
-  start_list_max_one_0_others$max_movement_d$movement <- max(part_data["movement_d"], na.rm = TRUE)
-  start_list_max_one_0_others$max_sad_d$sad           <- max(part_data["sad_d"],      na.rm = TRUE)
+  start_list_max_one_0_others$max_bad_d_std$bad           <- max(part_data["bad_d_std"],      na.rm = TRUE)
+  start_list_max_one_0_others$max_control_d_std$control   <- max(part_data["control_d_std"],  na.rm = TRUE)
+  start_list_max_one_0_others$max_energy_d_std$energy     <- max(part_data["energy_d_std"],   na.rm = TRUE)
+  start_list_max_one_0_others$max_focus_d_std$focus       <- max(part_data["focus_d_std"],    na.rm = TRUE)
+  start_list_max_one_0_others$max_fun_d_std$fun           <- max(part_data["fun_d_std"],      na.rm = TRUE)
+  start_list_max_one_0_others$max_interest_d_std$interest <- max(part_data["interest_d_std"], na.rm = TRUE)
+  start_list_max_one_0_others$max_movement_d_std$movement <- max(part_data["movement_d_std"], na.rm = TRUE)
+  start_list_max_one_0_others$max_sad_d_std$sad           <- max(part_data["sad_d_std"],      na.rm = TRUE)
   
   return(start_list_max_one_0_others)
 }
@@ -772,8 +814,8 @@ compute_pred_various_start <- function(adj_mats_var, n_timepoints, various_start
 # Run function to compute predicted values for thresholded and saturated networks 
 # (a) over study period and (b) into future
 
-start_list_max_one_0_others_names <- paste0("max_", c("bad_d", "control_d", "energy_d", "focus_d",
-                                                      "fun_d", "interest_d", "movement_d", "sad_d"))
+start_list_max_one_0_others_names <- paste0("max_", c("bad_d_std", "control_d_std", "energy_d_std", "focus_d_std",
+                                                      "fun_d_std", "interest_d_std", "movement_d_std", "sad_d_std"))
 
 pred_study_max_one_0_others_thres_a05 <- 
   compute_pred_various_start(thres_adj_mats_var, n_study_timepoints, start_list_max_one_0_others, start_list_max_one_0_others_names)
@@ -807,11 +849,12 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
     pred_df <- pred_df[pred_df$t >= view_t_min & pred_df$t <= view_t_max, ]
   }
   
-  # Create plots
+  # Define plot settings
   
   xlab <- "Time"
   ylab <- "Detrended Value"
-  ylim <- c(-100, 100)
+  ylim_ll <- -10
+  ylim_ul <- 10
   lwd <- 1.5
   pch <- 16
   
@@ -841,7 +884,24 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
   var_labels[var_labels == "sad"]      <- "Sad"
   
   pred_cols <- paste0(vars, "_pred")
-  obs_cols  <- paste0(vars, "_d")
+  obs_cols  <- paste0(vars, "_d_std")
+  
+    # Check that y-axis spans range of predicted and observed values
+  
+  pred_cols_min <- min(pred_df[, pred_cols], na.rm = TRUE)
+  pred_cols_max <- max(pred_df[, pred_cols], na.rm = TRUE)
+  
+  obs_cols_min  <- min(obs_df[, obs_cols],   na.rm = TRUE)
+  obs_cols_max  <- max(obs_df[, obs_cols],   na.rm = TRUE)
+  
+  if (pred_cols_min < ylim_ll | obs_cols_min < ylim_ll) {
+    stop(paste0("Make lower limit of 'ylim' <= ", min(pred_cols_min, obs_cols_min)))
+  }
+  if (pred_cols_max > ylim_ul | obs_cols_max > ylim_ul) {
+    stop(paste0("Make upper limit of 'ylim' >= ", max(pred_cols_max, obs_cols_max)))
+  }
+
+  # Create plots
   
   pdf(paste0("./results/pred_values/", plot_name, ".pdf"))
   
@@ -855,7 +915,7 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
     # Start with empty plot
     
     plot(pred_df$t, pred_df[, pred_col], main = var_label, 
-         type = "n", xlab = xlab, ylab = ylab, ylim = ylim)
+         type = "n", xlab = xlab, ylab = ylab, ylim = c(ylim_ll, ylim_ul))
     
     mtext(plot_title, side = 3, line = -1, outer = TRUE)
     
@@ -890,9 +950,11 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
     
     points(obs_df$t, obs_df[, obs_col])
     
-    # TODO (Consider making this optional): Overlay weekend indicator to explore weekend effects
+    # TODO (Consider making this optional): Overlay weekend indicator at upper limit of "ylim" to explore weekend effects
     
-    text(x = 0, y = 100, labels = "W:", cex = .5)
+    text(x = 0, y = ylim_ul, labels = "W:", cex = .5)
+    
+    obs_df$response_time_wend[obs_df$response_time_wend == 1] <- ylim_ul
     
     points(obs_df$t, obs_df$response_time_wend, pch = 95, cex = .6)
   }
@@ -990,14 +1052,14 @@ plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_list
 
 pred_max_one_0_others_focal_var_labels <- names(pred_study_max_one_0_others_thres_a05)
 
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_bad_d"]      <- "Bad Self"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_control_d"]  <- "Lack Control"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_energy_d"]   <- "Fatigue"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_focus_d"]    <- "Lack Focus"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_fun_d"]      <- "Inaction"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_interest_d"] <- "Lack Interest"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_movement_d"] <- "Slower or Fidgety"
-pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_sad_d"]      <- "Sad"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_bad_d_std"]      <- "Bad Self"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_control_d_std"]  <- "Lack Control"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_energy_d_std"]   <- "Fatigue"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_focus_d_std"]    <- "Lack Focus"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_fun_d_std"]      <- "Inaction"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_interest_d_std"] <- "Lack Interest"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_movement_d_std"] <- "Slower or Fidgety"
+pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels == "max_sad_d_std"]      <- "Sad"
 
   # Run "plot_pred_obs_various_start()" function
 
@@ -1026,11 +1088,14 @@ plot_pred_error <- function(pred_error, plot_name, plot_title) {
   pred_error$t_from_start <- NA
   pred_error$t_from_start <- pred_error$iter_t - 1
   
+  # Define plot settings
+  
   t_from_start_values <- unique(pred_error$t_from_start)
   
   xlab <- "Time Points From Starting Time Point"
   ylab <- "Prediction Error"
-  ylim <- c(-100, 100)
+  ylim_ll <- -10
+  ylim_ul <- 10
   col  <- "red"
   pch  <- 16
   
@@ -1047,6 +1112,20 @@ plot_pred_error <- function(pred_error, plot_name, plot_title) {
   var_labels[var_labels == "movement"] <- "Slower or Fidgety"
   var_labels[var_labels == "sad"]      <- "Sad"
   
+    # Check that y-axis spans range of predicted and observed values
+  
+  pred_error_cols_min <- min(pred_error[, paste0(vars, "_error")], na.rm = TRUE)
+  pred_error_cols_max <- max(pred_error[, paste0(vars, "_error")], na.rm = TRUE)
+  
+  if (pred_error_cols_min < ylim_ll) {
+    stop(paste0("Make lower limit of 'ylim' <= ", pred_error_cols_min))
+  }
+  if (pred_error_cols_max > ylim_ul) {
+    stop(paste0("Make upper limit of 'ylim' >= ", pred_error_cols_max))
+  }
+  
+  # Create plots
+  
   pdf(paste0("./results/pred_error/", plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
@@ -1056,7 +1135,7 @@ plot_pred_error <- function(pred_error, plot_name, plot_title) {
     var_label <- var_labels[i]
     
     plot(pred_error$t_from_start, pred_error[, paste0(var, "_error")], main = var_label,
-         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = ylim, xaxt = "n")
+         xlab = xlab, ylab = ylab, col = col, pch = pch, ylim = c(ylim_ll, ylim_ul), xaxt = "n")
     axis(1, at = t_from_start_values, labels = t_from_start_values)
 
     mtext(plot_title, side = 3, line = -1, outer = TRUE)

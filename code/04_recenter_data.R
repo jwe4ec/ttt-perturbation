@@ -55,8 +55,8 @@ dat$response_time_wend[is.na(dat$response_time_wday)]            <- NA
 # ---------------------------------------------------------------------------- #
 
 # In "ttt-p1-main-analysis" repo, linear trends were removed (creating "_d" variables).
-# Now try centering by both removing linear trend and accounting for weekend effect
-# (creating "_d2" variables).
+# Now try centering by both (a) removing linear trend if median is not 0 or 100 (otherwise, 
+# the variable seems unipolar) and (b) removing weekend effect (creating "_d2" variables).
 
 vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
 
@@ -74,7 +74,13 @@ for (var in vars) {
     
     # Fit linear model
     
-    fit <- lm(part_data[[var]] ~ part_data$bin_no_adj + part_data$response_time_wend, data = part_data)
+    median <- median(part_data[[var]], na.rm = TRUE)
+    
+    if (median %in% c(0, 100)) {
+      fit <- lm(part_data[[var]] ~ part_data$response_time_wend, data = part_data)
+    } else {
+      fit <- lm(part_data[[var]] ~ part_data$bin_no_adj + part_data$response_time_wend, data = part_data)
+    }
     
     # Calculate residuals for non-NA values
     

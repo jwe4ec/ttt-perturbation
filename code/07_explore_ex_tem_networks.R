@@ -936,7 +936,7 @@ plot_pred_obs <- function(pred_df, obs_df, obs_var_suf, pred_start_t_points, pre
   # Define plot settings
   
   xlab <- "Time"
-  ylab <- "Detrended Value"
+  ylab <- "Std. Centered Value"
   ylim_ll <- -10
   ylim_ul <- 10
   lwd <- 1.5
@@ -950,6 +950,7 @@ plot_pred_obs <- function(pred_df, obs_df, obs_var_suf, pred_start_t_points, pre
     if (is.null(iter_colors)) {
       color_pred <- rep("green", n_iterations)
     } else if (iter_colors == TRUE) {
+      set.seed(1234)
       color_pred <- distinctColorPalette(n_iterations)
     }
   }
@@ -967,8 +968,9 @@ plot_pred_obs <- function(pred_df, obs_df, obs_var_suf, pred_start_t_points, pre
   var_labels[var_labels == "movement"] <- "Slower or Fidgety"
   var_labels[var_labels == "sad"]      <- "Sad"
   
-  pred_cols <- paste0(vars, "_pred")
-  obs_cols  <- paste0(vars, obs_var_suf)
+  pred_cols    <- paste0(vars, "_pred")
+  obs_cols     <- paste0(vars, obs_var_suf)
+  raw_obs_cols <- vars
   
     # Check that y-axis spans range of predicted and observed values
   
@@ -992,9 +994,10 @@ plot_pred_obs <- function(pred_df, obs_df, obs_var_suf, pred_start_t_points, pre
   par(mfrow = c(2, 2))
   
   for (i in 1:length(vars)) {
-    pred_col  <- pred_cols[i]
-    obs_col   <- obs_cols[i]
-    var_label <- var_labels[i]
+    pred_col    <- pred_cols[i]
+    obs_col     <- obs_cols[i]
+    raw_obs_col <- raw_obs_cols[i]
+    var_label   <- var_labels[i]
     
     # Start with empty plot
     
@@ -1041,6 +1044,19 @@ plot_pred_obs <- function(pred_df, obs_df, obs_var_suf, pred_start_t_points, pre
     obs_df$response_time_wend[obs_df$response_time_wend == 1] <- ylim_ul
     
     points(obs_df$t, obs_df$response_time_wend, pch = 95, cex = .6)
+    
+    # TODO (Consider making this optional): Print median of raw observed column
+    
+    raw_obs_col_median <- median(obs_df[, raw_obs_col], na.rm = TRUE)
+    
+    if (raw_obs_col_median %in% c(0, 100)) {
+      detrend_label <- "(Not Detrended)"
+    } else {
+      detrend_label <- NULL
+    }
+    
+    mtext(paste("Raw Median:", raw_obs_col_median, detrend_label), 
+          side = 3, line = 0, adj = 0, cex = .5)
   }
   
   par(mfrow = c(1, 1))
@@ -1081,7 +1097,7 @@ lapply(names(pred_400_bl_satur),       function(lifepak_id) {
 lapply(names(pred_study_bl_gimme),     function(lifepak_id) {
   plot_pred_obs(pred_study_bl_gimme[[lifepak_id]],     dat_ls[[lifepak_id]], "_d2_std", "one", "l",
                 paste0("pred_study_bl_gimme_",     lifepak_id),
-                paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
+                paste0("Through Study for GIMME Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 
   # For 4 predicted values starting from each time point
@@ -1129,7 +1145,7 @@ lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
 lapply(names(pred_study_4_gimme),     function(lifepak_id) {
   plot_pred_obs(pred_study_4_gimme[[lifepak_id]],     dat_ls[[lifepak_id]], "_d2_std", "many", "l",
                 paste0("pred_study_4_gimme_iter_colors_",          lifepak_id),
-                paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
+                paste0("Next 3 Through Study for GIMME Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 

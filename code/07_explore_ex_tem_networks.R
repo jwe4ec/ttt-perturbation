@@ -519,13 +519,18 @@ lapply(names(satur_adj_mats_var), function(lifepak_id) {
 
 # Define function to standardize detrended variables
 
-compute_d_std_vars <- function(part_data) {
-  d_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_d") # TODO: HERE
+compute_std_vars <- function(part_data) {
+  node_vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
-  for (d_col in d_cols) {
-    d_std_col <- paste0(d_col, "_std")
+  d_cols  <- paste0(node_vars, "_d")
+  d2_cols <- paste0(node_vars, "_d2")
+  
+  target_cols <- c(d_cols, d2_cols)
+  
+  for (target_col in target_cols) {
+    std_col <- paste0(target_col, "_std")
     
-    part_data[, d_std_col] <- as.numeric(scale(part_data[, d_col]))
+    part_data[, std_col] <- as.numeric(scale(part_data[, target_col]))
   }
   
   return(part_data)
@@ -533,7 +538,7 @@ compute_d_std_vars <- function(part_data) {
 
 # Run function
 
-dat_ls <- lapply(dat_ls, compute_d_std_vars)
+dat_ls <- lapply(dat_ls, compute_std_vars)
 
 # ---------------------------------------------------------------------------- #
 # Define function to compute predicted values ----
@@ -611,15 +616,15 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 # Define function for defining starting values from participant's standardized 
 # detrended values in data at a given time point "j"
 
-define_start <- function(part_data, j) {                                       # TODO: HERE
-  start_list <- list(bad      = part_data[j, "bad_d_std"],
-                     control  = part_data[j, "control_d_std"],
-                     energy   = part_data[j, "energy_d_std"],
-                     focus    = part_data[j, "focus_d_std"],
-                     fun      = part_data[j, "fun_d_std"],
-                     interest = part_data[j, "interest_d_std"],
-                     movement = part_data[j, "movement_d_std"],
-                     sad      = part_data[j, "sad_d_std"])
+define_start <- function(part_data, j, obs_var_suf) {
+  start_list <- list(bad      = part_data[j, paste0("bad",      obs_var_suf)],
+                     control  = part_data[j, paste0("control",  obs_var_suf)],
+                     energy   = part_data[j, paste0("energy",   obs_var_suf)],
+                     focus    = part_data[j, paste0("focus",    obs_var_suf)],
+                     fun      = part_data[j, paste0("fun",      obs_var_suf)],
+                     interest = part_data[j, paste0("interest", obs_var_suf)],
+                     movement = part_data[j, paste0("movement", obs_var_suf)],
+                     sad      = part_data[j, paste0("sad",      obs_var_suf)])
 }
 
 # ---------------------------------------------------------------------------- #
@@ -632,30 +637,39 @@ n_study_timepoints <- lapply(dat_ls, nrow)
 
 # Define starting values for each participant from detrended values at baseline
 
-start_list_bl <- lapply(dat_ls, define_start, 1)                                  # TODO: HERE
+start_list_bl_d_std  <- lapply(dat_ls, define_start, 1, "_d_std")
+start_list_bl_d2_std <- lapply(dat_ls, define_start, 1, "_d2_std")
 
-# Compute predicted values for thresholded and saturated networks (a) over study 
-# period and (b) into future 
+# Compute predicted values for thresholded and saturated Mplus networks (a) over study 
+# period and (b) into future
 
 pred_study_bl_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
-  compute_pred(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl[[lifepak_id]])
+  compute_pred(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl_d_std[[lifepak_id]])
 })
 pred_400_bl_thres_a05   <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
-  compute_pred(thres_adj_mats_var[[lifepak_id]], 400,                              start_list_bl[[lifepak_id]])
+  compute_pred(thres_adj_mats_var[[lifepak_id]], 400,                              start_list_bl_d_std[[lifepak_id]])
 })
 
 pred_study_bl_satur     <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
-  compute_pred(satur_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl[[lifepak_id]])
+  compute_pred(satur_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl_d_std[[lifepak_id]])
 })
 pred_400_bl_satur       <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
-  compute_pred(satur_adj_mats_var[[lifepak_id]], 400,                              start_list_bl[[lifepak_id]])
+  compute_pred(satur_adj_mats_var[[lifepak_id]], 400,                              start_list_bl_d_std[[lifepak_id]])
 })
 
 names(pred_study_bl_thres_a05) <- names(thres_adj_mats_var)
 names(pred_400_bl_thres_a05)   <- names(thres_adj_mats_var)
 
 names(pred_study_bl_satur)     <- names(satur_adj_mats_var)
-names(pred_400_bl_satur)       <- names(satur_adj_mats_var)                       # TODO: HERE
+names(pred_400_bl_satur)       <- names(satur_adj_mats_var)
+
+# Compute predicted values for GIMME networks over study period
+
+pred_study_bl_gimme     <- lapply(names(gimme_adj_mats_var), function(lifepak_id) {
+  compute_pred(gimme_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], start_list_bl_d2_std[[lifepak_id]])
+})
+
+names(pred_study_bl_gimme)     <- names(gimme_adj_mats_var)
 
 # ---------------------------------------------------------------------------- #
 # Define function to compute "k" predicted values starting from each time point ----
@@ -664,11 +678,11 @@ names(pred_400_bl_satur)       <- names(satur_adj_mats_var)                     
 # Define function to compute "k" predicted values over desired time points ("iterations") from
 # adjacency matrix, starting each iteration from observed value at that iteration's time point
 
-compute_k_pred <- function(part_data, adj_mat, k, iterations) {
+compute_k_pred <- function(part_data, adj_mat, k, iterations, obs_var_suf) {
   pred <- data.frame()
   
   for (iter in 1:iterations) {
-    start_list <- define_start(part_data, iter)                # TODO: HERE
+    start_list <- define_start(part_data, iter, obs_var_suf)
     
     iter_pred <- compute_pred(adj_mat, k, start_list)
     
@@ -693,12 +707,12 @@ compute_k_pred <- function(part_data, adj_mat, k, iterations) {
 # Define function to compute signed prediction errors for "k" predicted values
 # starting from each time point
 
-compute_pred_error <- function(part_data, pred) {
+compute_pred_error <- function(part_data, pred, obs_var_suf) {
   names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
   
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
-  target_cols <- paste0(vars, "_d_std")                               # TODO: HERE
+  target_cols <- paste0(vars, obs_var_suf)
   part_data_tmp <- part_data[, c("t", target_cols)]
   
   pred <- merge(pred, part_data_tmp, by = "t", all.x = TRUE)
@@ -707,7 +721,7 @@ compute_pred_error <- function(part_data, pred) {
   # Compute signed prediction error
   
   for (var in vars) {
-    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d_std")] - pred[, paste0(var, "_pred")]      # TODO: HERE
+    pred[, paste0(var, "_error")] <- pred[, paste0(var, obs_var_suf)] - pred[, paste0(var, "_pred")]
   }
   
   return(pred)
@@ -721,7 +735,7 @@ compute_pred_error <- function(part_data, pred) {
 # signed prediction errors) / SD of observed data, at each "iter_t" for "k" predicted 
 # values starting from each time point
 
-compute_diff_over_obs_sd <- function(pred_error) {
+compute_diff_over_obs_sd <- function(pred_error, obs_var_suf) {
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
   iter_t_values <- unique(pred_error$iter_t)
@@ -732,7 +746,7 @@ compute_diff_over_obs_sd <- function(pred_error) {
     pred_error_iter_t <- pred_error[pred_error$iter_t == iter_t, ]
     
     for (var in vars) {
-      obs_col   <- paste0(var, "_d_std")                              # TODO: HERE
+      obs_col   <- paste0(var, obs_var_suf)
       error_col <- paste0(var, "_error")
       
       # Restrict to rows where variable's prediction errors could be computed
@@ -759,44 +773,69 @@ compute_diff_over_obs_sd <- function(pred_error) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Compute 4 predicted values starting from participant's detrended values at each time point ----
+# Compute 4 predicted values for Mplus networks starting from participant's detrended values at each time point ----
 # ---------------------------------------------------------------------------- #
 
-# Compute predicted values for saturated and thresholded networks over study period
+# Compute predicted values for saturated and thresholded Mplus networks over study period
 
 pred_study_4_satur     <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
-  compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+  compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]], "_d_std")
 })
 
 pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
-  compute_k_pred(dat_ls[[lifepak_id]], thres_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]])
+  compute_k_pred(dat_ls[[lifepak_id]], thres_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]], "_d_std")
 })
 
 names(pred_study_4_satur)     <- names(satur_adj_mats_var)
-names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)                           # TODO: HERE
+names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
 
 # Compute signed prediction error
 
 pred_error_study_4_satur     <- lapply(names(dat_ls), function(lifepak_id) {
-  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_satur[[lifepak_id]])
+  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_satur[[lifepak_id]],     "_d_std")
 })
 
 pred_error_study_4_thres_a05 <- lapply(names(dat_ls), function(lifepak_id) {
-  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_thres_a05[[lifepak_id]])
+  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_thres_a05[[lifepak_id]], "_d_std")
 })
 
 names(pred_error_study_4_satur)     <- names(dat_ls)
-names(pred_error_study_4_thres_a05) <- names(dat_ls)                                # TODO: HERE
+names(pred_error_study_4_thres_a05) <- names(dat_ls)
+
+# TODO (some "diff_over_obs_sd" values are negative because sometimes "error_sd" is 
+# greater than "obs_sd"): Compute "diff_over_obs_sd" at each "iter_t". Also sometimes 0.
+
+diff_over_obs_sd_study_4_satur     <- lapply(pred_error_study_4_satur,     compute_diff_over_obs_sd, "_d_std")
+diff_over_obs_sd_study_4_thres_a05 <- lapply(pred_error_study_4_thres_a05, compute_diff_over_obs_sd, "_d_std")
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Compute 4 predicted values for GIMME networks starting from participant's detrended values at each time point ----
+# ---------------------------------------------------------------------------- #
+
+# Compute predicted values for GIMME networks over study period
+
+pred_study_4_gimme     <- lapply(names(gimme_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(dat_ls[[lifepak_id]], gimme_adj_mats_var[[lifepak_id]], 4, n_study_timepoints[[lifepak_id]], "_d2_std")
+})
+
+names(pred_study_4_gimme) <- names(gimme_adj_mats_var)
+
+# Compute signed prediction error
+
+pred_error_study_4_gimme     <- lapply(names(dat_ls), function(lifepak_id) {
+  compute_pred_error(dat_ls[[lifepak_id]], pred_study_4_gimme[[lifepak_id]], "_d2_std")
+})
+
+names(pred_error_study_4_gimme) <- names(dat_ls)
 
 # TODO (some "diff_over_obs_sd" values are negative because sometimes "error_sd" is 
 # greater than "obs_sd"): Compute "diff_over_obs_sd" at each "iter_t"
 
-diff_over_obs_sd_study_4_satur     <- lapply(pred_error_study_4_satur,     compute_diff_over_obs_sd)
-diff_over_obs_sd_study_4_thres_a05 <- lapply(pred_error_study_4_thres_a05, compute_diff_over_obs_sd)      # TODO: HERE
-
-
-
-
+diff_over_obs_sd_study_4_gimme <- lapply(pred_error_study_4_gimme, compute_diff_over_obs_sd, "_d2_std")
 
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's max for one node and 0 for others ----
@@ -883,7 +922,7 @@ pred_400_max_one_0_others_satur <-
 # time points (view_t_min and view_t_max) and, for "k" predicted values starting from
 # many time points, (b) using a different color for each iteration (iter_colors = TRUE)
 
-plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, plot_name, plot_title,
+plot_pred_obs <- function(pred_df, obs_df, obs_var_suf, pred_start_t_points, pred_plot_type, plot_name, plot_title,
                           view_t_min = NULL, view_t_max = NULL, iter_colors = NULL) {
   obs_df$t <- 1:nrow(obs_df)
   
@@ -929,7 +968,7 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
   var_labels[var_labels == "sad"]      <- "Sad"
   
   pred_cols <- paste0(vars, "_pred")
-  obs_cols  <- paste0(vars, "_d_std")                                          # TODO: HERE
+  obs_cols  <- paste0(vars, obs_var_suf)
   
     # Check that y-axis spans range of predicted and observed values
   
@@ -1013,65 +1052,86 @@ dir.create("./results/pred_values/")
 
   # For all predicted values starting from observed baseline values
 
+    # For Mplus networks
+
 lapply(names(pred_study_bl_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "_d_std", "one", "l",
                 paste0("pred_study_bl_thres_a05_", lifepak_id),
                 paste0("Through Study for Thresholded Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_thres_a05),   function(lifepak_id) {
-  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   dat_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   dat_ls[[lifepak_id]], "_d_std", "one", "l",
                 paste0("pred_400_bl_thres_a05_",   lifepak_id),
                 paste0("Through 400 for Thresholded Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
 })
 
 lapply(names(pred_study_bl_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "_d_std", "one", "l",
                 paste0("pred_study_bl_satur_",     lifepak_id),
                 paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_satur),       function(lifepak_id) {
-  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       dat_ls[[lifepak_id]], "one", "l",
+  plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       dat_ls[[lifepak_id]], "_d_std", "one", "l",
                 paste0("pred_400_bl_satur_",       lifepak_id),
                 paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 
+    # For GIMME neworks
+
+lapply(names(pred_study_bl_gimme),     function(lifepak_id) {
+  plot_pred_obs(pred_study_bl_gimme[[lifepak_id]],     dat_ls[[lifepak_id]], "_d2_std", "one", "l",
+                paste0("pred_study_bl_gimme_",     lifepak_id),
+                paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
+})
+
   # For 4 predicted values starting from each time point
 
+    # For Mplus networks
+
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "_d_std", "many", "l",
                 paste0("pred_study_4_satur_",                      lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "_d_std", "many", "l",
                 paste0("pred_study_4_satur_iter_colors_",          lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
-  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "_d_std", "many", "l",
                 paste0("pred_study_4_satur_1-50_iter_colors_",     lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
 })
 
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "_d_std", "many", "l",
                 paste0("pred_study_4_thres_a05_",                  lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "_d_std", "many", "l",
                 paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
-  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "many", "l",
+  plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "_d_std", "many", "l",
                 paste0("pred_study_4_thres_a05_1-50_iter_colors_", lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
-})                                                                                                                         # TODO: HERE
+})
+
+    # For GIMME neworks
+
+lapply(names(pred_study_4_gimme),     function(lifepak_id) {
+  plot_pred_obs(pred_study_4_gimme[[lifepak_id]],     dat_ls[[lifepak_id]], "_d2_std", "many", "l",
+                paste0("pred_study_4_gimme_iter_colors_",          lifepak_id),
+                paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
+                iter_colors = TRUE)
+})
 
 # Define function to plot predicted values from various baseline starting points
 
@@ -1081,7 +1141,7 @@ lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
 
 
 
-plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, dat_ls, 
+plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, dat_ls, obs_var_suf, 
                                            plot_name_stem, thres, plot_title_stem) {
   for (i in 1:length(various_pred_lists)) {
     pred_list <- various_pred_lists[[i]]
@@ -1091,7 +1151,7 @@ plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_list
     pred_list_plot_title_stem <- sub("pred_list_focal_var_label", pred_list_focal_var_label, plot_title_stem)
     
     lapply(names(pred_list), function(lifepak_id) {
-      plot_pred_obs(pred_list[[lifepak_id]], dat_ls[[lifepak_id]], "one", "l",
+      plot_pred_obs(pred_list[[lifepak_id]], dat_ls[[lifepak_id]], obs_var_suf, "one", "l",
                     paste0(plot_name_stem, "_", pred_list_name, "_", thres, "_", lifepak_id),
                     paste0(pred_list_plot_title_stem, lifepak_id, ")"))
     })
@@ -1114,17 +1174,17 @@ pred_max_one_0_others_focal_var_labels[pred_max_one_0_others_focal_var_labels ==
 
   # Run "plot_pred_obs_various_start()" function
 
-plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, dat_ls,
+plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, pred_max_one_0_others_focal_var_labels, dat_ls, "_d_std",
                                "pred_study_max_one_0_others", "thres_a05",
                                'Through Study for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
-plot_pred_obs_various_bl_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, dat_ls,
+plot_pred_obs_various_bl_start(pred_400_max_one_0_others_thres_a05,   pred_max_one_0_others_focal_var_labels, dat_ls, "_d_std",
                                "pred_400_max_one_0_others",   "thres_a05",
                                'Through 400 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
-plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, dat_ls,
+plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     pred_max_one_0_others_focal_var_labels, dat_ls, "_d_std",
                                "pred_study_max_one_0_others", "satur",
                                'Through Study for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
-plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, dat_ls,
+plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       pred_max_one_0_others_focal_var_labels, dat_ls, "_d_std",
                                "pred_400_max_one_0_others",   "satur",
                                'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ')
 
@@ -1163,7 +1223,7 @@ plot_pred_error <- function(pred_error, plot_name, plot_title) {
   var_labels[var_labels == "movement"] <- "Slower or Fidgety"
   var_labels[var_labels == "sad"]      <- "Sad"
   
-    # Check that y-axis spans range of predicted and observed values
+    # Check that y-axis spans range of prediction error values
   
   pred_error_cols_min <- min(pred_error[, paste0(vars, "_error")], na.rm = TRUE)
   pred_error_cols_max <- max(pred_error[, paste0(vars, "_error")], na.rm = TRUE)
@@ -1203,6 +1263,8 @@ dir.create("./results/pred_error/")
 
   # For 4 predicted values starting from each time point
 
+    # For Mplus networks
+
 lapply(names(pred_error_study_4_satur),     function(lifepak_id) {
   plot_pred_error(pred_error_study_4_satur[[lifepak_id]],
     paste0("pred_study_4_satur_error_", lifepak_id),
@@ -1213,7 +1275,15 @@ lapply(names(pred_error_study_4_thres_a05), function(lifepak_id) {
   plot_pred_error(pred_error_study_4_thres_a05[[lifepak_id]],
     paste0("pred_study_4_thres_a05_error_", lifepak_id),
     paste0("Errors for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
-})                                                                                                                # TODO: HERE
+})
+
+    # For GIMME networks
+
+lapply(names(pred_error_study_4_gimme),     function(lifepak_id) {
+  plot_pred_error(pred_error_study_4_gimme[[lifepak_id]],
+    paste0("pred_study_4_gimme_error_", lifepak_id),
+    paste0("Errors for Next 3 Through Study for GIMME Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+})
 
 # ---------------------------------------------------------------------------- #
 # Plot "diff_over_obs_sd" at each "iter_t" ----
@@ -1229,10 +1299,10 @@ plot_diff_over_obs_sd <- function(diff_over_obs_sd, plot_name, plot_title) {
   t_from_start_values <- unique(diff_over_obs_sd$t_from_start)
   
   xlab <- "Time Points From Starting Time Point"
-  ylab <- expression((italic("SD")["Data"] - italic("SD")["Pred. Errors"]) / italic("SD")[Data])
+  ylab <- expression((italic("SD")["Data"] - italic("SD")["Pred. Errors"]) / italic("SD")["Data"])
   ylim <- c(-2, 2)
 
-  vars       <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
   var_labels <- vars
   
@@ -1275,6 +1345,8 @@ dir.create("./results/diff_over_obs_sd/")
 
   # For 4 predicted values starting from each time point
 
+    # For Mplus networks
+
 lapply(names(diff_over_obs_sd_study_4_satur),     function(lifepak_id) {
   plot_diff_over_obs_sd(diff_over_obs_sd_study_4_satur[[lifepak_id]],
     paste0("diff_over_obs_sd_study_4_satur_", lifepak_id),
@@ -1285,7 +1357,15 @@ lapply(names(diff_over_obs_sd_study_4_thres_a05), function(lifepak_id) {
   plot_diff_over_obs_sd(diff_over_obs_sd_study_4_thres_a05[[lifepak_id]],
     paste0("diff_over_obs_sd_study_4_thres_a05_", lifepak_id),
     paste0("Fit for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
-})                                                                                                                # TODO: HERE
+})
+
+    # For GIMME networks
+
+lapply(names(diff_over_obs_sd_study_4_gimme),     function(lifepak_id) {
+  plot_diff_over_obs_sd(diff_over_obs_sd_study_4_gimme[[lifepak_id]],
+                        paste0("diff_over_obs_sd_study_4_gimme_", lifepak_id),
+                        paste0("Fit for Next 3 Through Study for GIMME Starting From Each Obs. Value (ID ", lifepak_id, ")"))
+})
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

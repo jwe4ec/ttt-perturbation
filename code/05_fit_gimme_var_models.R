@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- #
-# Refit Idiographic VAR Models -----
+# Fit GIMME Idiographic VAR Models -----
 # Author: Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
@@ -126,12 +126,12 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 
 
 # ---------------------------------------------------------------------------- #
-# Refit idiographic VAR models using GIMME ----
+# Fit GIMME idiographic VAR models ----
 # ---------------------------------------------------------------------------- #
 
 # TODO (seem unable to fit saturated networks): Initial idiographic VAR models fit 
 # in "ttt-p1-main-analysis" repo using Mplus were based on "_d" variables that were 
-# centered by removing linear trend. Refit idiographic VAR models using "gimme" based 
+# centered by removing linear trend. Fit idiographic VAR models using "gimme" based 
 # on "_d2" variables that were centered by removing linear trend and weekend effect.
 
 var_res_ls     <- indSEM(dat_mat_ls, "./results/gimme/raw/",

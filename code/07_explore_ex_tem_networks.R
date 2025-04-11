@@ -37,26 +37,48 @@ set.seed(1234)
 # Import data, selected results, and adjacency matrices ----
 # ---------------------------------------------------------------------------- #
 
-# Data (Note: "_d" variables were centered by removing linear trend in "ttt-p1-main-analysis" 
-# repo, whereas "_d2" variables were centered by removing linear trend and weekend effect in
-# "recenter_data.R" of present repo)
+# Data
+
+  # Note: "_d" variables were centered by removing linear trend in "ttt-p1-main-analysis" 
+  # repo, whereas "_d2" variables were centered by removing linear trend and weekend effect in
+  # "recenter_data.R" of present repo
 
 load("./data/recentered/data_var_perturb2.RDS")
 
 dat <- data_var_perturb2
 
-# Temporal results from idiographic VAR models
+# Results from idiographic VAR models
 
-extracted_results_path <- "./results/from_ttt-p1-main-analysis/extracted/"
+  # Temporal results from Mplus using "_d" variables
 
-load(paste0(extracted_results_path, "results_var.RDS"))
+load("./results/from_ttt-p1-main-analysis/extracted/results_var.RDS")
+
+  # All results from GIMME using "_d2" variables
+
+gimme_var_res_ls     <- readRDS("./results/gimme/raw/var_res_ls.RDS")
+gimme_var_res_ls_std <- readRDS("./results/gimme/raw_std/var_res_ls_std.RDS") # TODO: Likely remove this
+
+
+
+
 
 # Adjacency matrices for temporal results from idiographic VAR models
 
 adj_mats_path <- "./results/adj_mats/"
 
+  # From Mplus using "_d" variables
+
 load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
 load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
+
+  # From GIMME using "_d2" variables
+
+load(paste0(adj_mats_path, "gimme_adj_mats_var.Rdata"))
+load(paste0(adj_mats_path, "gimme_adj_mats_var_std.Rdata")) # TODO: Likely remove this
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Explore number of significant autoregressive and cross-lagged effects ----
@@ -335,7 +357,7 @@ dat_ls <- dat_ls[retain_ids]
 thres_adj_mats_var <- thres_adj_mats_var[retain_ids]
 satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
 
-# TODO: Temporarily save for use in prior script "refit_var_models.R"
+# TODO: Temporarily save for use in prior script "fit_gimme_var_models.R"
 
 dir.create("./data/temp/")
 
@@ -498,7 +520,7 @@ lapply(names(satur_adj_mats_var), function(lifepak_id) {
 # Define function to standardize detrended variables
 
 compute_d_std_vars <- function(part_data) {
-  d_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_d")
+  d_cols <- paste0(c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad"), "_d") # TODO: HERE
   
   for (d_col in d_cols) {
     d_std_col <- paste0(d_col, "_std")
@@ -589,7 +611,7 @@ compute_pred <- function(adj_mat, n_timepoints, start_list) {
 # Define function for defining starting values from participant's standardized 
 # detrended values in data at a given time point "j"
 
-define_start <- function(part_data, j) {
+define_start <- function(part_data, j) {                                       # TODO: HERE
   start_list <- list(bad      = part_data[j, "bad_d_std"],
                      control  = part_data[j, "control_d_std"],
                      energy   = part_data[j, "energy_d_std"],
@@ -610,7 +632,7 @@ n_study_timepoints <- lapply(dat_ls, nrow)
 
 # Define starting values for each participant from detrended values at baseline
 
-start_list_bl <- lapply(dat_ls, define_start, 1)
+start_list_bl <- lapply(dat_ls, define_start, 1)                                  # TODO: HERE
 
 # Compute predicted values for thresholded and saturated networks (a) over study 
 # period and (b) into future 
@@ -633,7 +655,7 @@ names(pred_study_bl_thres_a05) <- names(thres_adj_mats_var)
 names(pred_400_bl_thres_a05)   <- names(thres_adj_mats_var)
 
 names(pred_study_bl_satur)     <- names(satur_adj_mats_var)
-names(pred_400_bl_satur)       <- names(satur_adj_mats_var)
+names(pred_400_bl_satur)       <- names(satur_adj_mats_var)                       # TODO: HERE
 
 # ---------------------------------------------------------------------------- #
 # Define function to compute "k" predicted values starting from each time point ----
@@ -646,7 +668,7 @@ compute_k_pred <- function(part_data, adj_mat, k, iterations) {
   pred <- data.frame()
   
   for (iter in 1:iterations) {
-    start_list <- define_start(part_data, iter)
+    start_list <- define_start(part_data, iter)                # TODO: HERE
     
     iter_pred <- compute_pred(adj_mat, k, start_list)
     
@@ -676,7 +698,7 @@ compute_pred_error <- function(part_data, pred) {
   
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
   
-  target_cols <- paste0(vars, "_d_std")
+  target_cols <- paste0(vars, "_d_std")                               # TODO: HERE
   part_data_tmp <- part_data[, c("t", target_cols)]
   
   pred <- merge(pred, part_data_tmp, by = "t", all.x = TRUE)
@@ -685,7 +707,7 @@ compute_pred_error <- function(part_data, pred) {
   # Compute signed prediction error
   
   for (var in vars) {
-    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d_std")] - pred[, paste0(var, "_pred")]
+    pred[, paste0(var, "_error")] <- pred[, paste0(var, "_d_std")] - pred[, paste0(var, "_pred")]      # TODO: HERE
   }
   
   return(pred)
@@ -710,7 +732,7 @@ compute_diff_over_obs_sd <- function(pred_error) {
     pred_error_iter_t <- pred_error[pred_error$iter_t == iter_t, ]
     
     for (var in vars) {
-      obs_col   <- paste0(var, "_d_std")
+      obs_col   <- paste0(var, "_d_std")                              # TODO: HERE
       error_col <- paste0(var, "_error")
       
       # Restrict to rows where variable's prediction errors could be computed
@@ -751,7 +773,7 @@ pred_study_4_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id)
 })
 
 names(pred_study_4_satur)     <- names(satur_adj_mats_var)
-names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)
+names(pred_study_4_thres_a05) <- names(thres_adj_mats_var)                           # TODO: HERE
 
 # Compute signed prediction error
 
@@ -764,13 +786,13 @@ pred_error_study_4_thres_a05 <- lapply(names(dat_ls), function(lifepak_id) {
 })
 
 names(pred_error_study_4_satur)     <- names(dat_ls)
-names(pred_error_study_4_thres_a05) <- names(dat_ls)
+names(pred_error_study_4_thres_a05) <- names(dat_ls)                                # TODO: HERE
 
 # TODO (some "diff_over_obs_sd" values are negative because sometimes "error_sd" is 
 # greater than "obs_sd"): Compute "diff_over_obs_sd" at each "iter_t"
 
 diff_over_obs_sd_study_4_satur     <- lapply(pred_error_study_4_satur,     compute_diff_over_obs_sd)
-diff_over_obs_sd_study_4_thres_a05 <- lapply(pred_error_study_4_thres_a05, compute_diff_over_obs_sd)
+diff_over_obs_sd_study_4_thres_a05 <- lapply(pred_error_study_4_thres_a05, compute_diff_over_obs_sd)      # TODO: HERE
 
 
 
@@ -844,6 +866,12 @@ pred_study_max_one_0_others_satur <-
 pred_400_max_one_0_others_satur <- 
   compute_pred_various_start(satur_adj_mats_var, 400,                start_list_max_one_0_others, start_list_max_one_0_others_names)
 
+# TODO: Adapt as needed and run for GIMME results
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Plot predicted values ----
 # ---------------------------------------------------------------------------- #
@@ -901,7 +929,7 @@ plot_pred_obs <- function(pred_df, obs_df, pred_start_t_points, pred_plot_type, 
   var_labels[var_labels == "sad"]      <- "Sad"
   
   pred_cols <- paste0(vars, "_pred")
-  obs_cols  <- paste0(vars, "_d_std")
+  obs_cols  <- paste0(vars, "_d_std")                                          # TODO: HERE
   
     # Check that y-axis spans range of predicted and observed values
   
@@ -1043,9 +1071,15 @@ lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
                 paste0("pred_study_4_thres_a05_1-50_iter_colors_", lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 view_t_min = 1, view_t_max = 50, iter_colors = TRUE)
-})
+})                                                                                                                         # TODO: HERE
 
 # Define function to plot predicted values from various baseline starting points
+
+  # TODO: Adapt as needed and run for GIMME results
+
+
+
+
 
 plot_pred_obs_various_bl_start <- function(various_pred_lists, various_pred_lists_focal_var_labels, dat_ls, 
                                            plot_name_stem, thres, plot_title_stem) {
@@ -1179,7 +1213,7 @@ lapply(names(pred_error_study_4_thres_a05), function(lifepak_id) {
   plot_pred_error(pred_error_study_4_thres_a05[[lifepak_id]],
     paste0("pred_study_4_thres_a05_error_", lifepak_id),
     paste0("Errors for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
-})
+})                                                                                                                # TODO: HERE
 
 # ---------------------------------------------------------------------------- #
 # Plot "diff_over_obs_sd" at each "iter_t" ----
@@ -1251,7 +1285,7 @@ lapply(names(diff_over_obs_sd_study_4_thres_a05), function(lifepak_id) {
   plot_diff_over_obs_sd(diff_over_obs_sd_study_4_thres_a05[[lifepak_id]],
     paste0("diff_over_obs_sd_study_4_thres_a05_", lifepak_id),
     paste0("Fit for Next 3 Through Study for Thres. Starting From Each Obs. Value (ID ", lifepak_id, ")"))
-})
+})                                                                                                                # TODO: HERE
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

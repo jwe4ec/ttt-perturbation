@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- #
-# Created Adjacency Matrices for Idiographic VAR Temporal Networks -----
+# Created Adjacency Matrices for Mplus Idiographic VAR Temporal Networks -----
 # Authors: Josip Razum, Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 

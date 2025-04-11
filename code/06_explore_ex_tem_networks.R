@@ -10,14 +10,6 @@
 # Before running script, restart R (CTRL+SHIFT+F10 on Windows) and set working 
 # directory to parent folder
 
-# TODO: Move computation of weekend indicator to separate script
-# TODO: Add weekend indicator to detrending model in separate script (i.e.,
-# node variable ~ bin_no_adj + weekend) then refit network on those residuals
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Store working directory, check correct R version, load packages ----
 # ---------------------------------------------------------------------------- #
@@ -45,11 +37,13 @@ set.seed(1234)
 # Import data, selected results, and adjacency matrices ----
 # ---------------------------------------------------------------------------- #
 
-# Data
+# Data (Note: "_d" variables were centered by removing linear trend in "ttt-p1-main-analysis" 
+# repo, whereas "_d2" variables were centered by removing linear trend and weekend effect in
+# "recenter_data.R" of present repo)
 
-load("./data/from_ttt-p1-main-analysis/final_clean/data_var_perturb.RDS")
+load("./data/recentered/data_var_perturb2.RDS")
 
-dat <- data_var_perturb
+dat <- data_var_perturb2
 
 # Temporal results from idiographic VAR models
 
@@ -63,20 +57,6 @@ adj_mats_path <- "./results/adj_mats/"
 
 load(paste0(adj_mats_path, "thres_adj_mats_var.Rdata"))
 load(paste0(adj_mats_path, "satur_adj_mats_var.Rdata"))
-
-# ---------------------------------------------------------------------------- #
-# Compute day of "response_time" and weekend indicator ----
-# ---------------------------------------------------------------------------- #
-
-dat$response_time_wday <- weekdays(as.Date(dat$response_time))
-
-# Compute weekend indicator
-
-wend_days <- c("Saturday", "Sunday")
-
-dat$response_time_wend[dat$response_time_wday %in% wend_days]    <- 1
-dat$response_time_wend[!(dat$response_time_wday %in% wend_days)] <- 0
-dat$response_time_wend[is.na(dat$response_time_wday)]            <- NA
 
 # ---------------------------------------------------------------------------- #
 # Explore number of significant autoregressive and cross-lagged effects ----
@@ -346,12 +326,25 @@ all(q1_ids %in% q3_ids)
 
 
 
-retain_ids <- c(high_sig_edges_ex_id, med_sig_edges_ex_id, low_sig_edges_ex_id)
+retain_ids <- c(high_sig_edges_ex_id = high_sig_edges_ex_id,
+                med_sig_edges_ex_id  = med_sig_edges_ex_id, 
+                low_sig_edges_ex_id  = low_sig_edges_ex_id)
 
 dat_ls <- dat_ls[retain_ids]
 
 thres_adj_mats_var <- thres_adj_mats_var[retain_ids]
 satur_adj_mats_var <- satur_adj_mats_var[retain_ids]
+
+# TODO: Temporarily save for use in prior script "refit_var_models.R"
+
+dir.create("./data/temp/")
+
+save(retain_ids, file = "./data/temp/retain_ids.RDS")
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Test whether weekend indicator predicts missingness ----

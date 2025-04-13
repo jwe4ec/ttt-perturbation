@@ -134,6 +134,23 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 # centered by removing linear trend. Fit idiographic VAR models using "gimme" based 
 # on "_d2" variables that were centered by removing linear trend and weekend effect.
 
+  # TODO: Resolve warnings when standardize = FALSE
+    # Warning messages:
+    # 1: In mapply(strwidth, s = labels, cex = ones) :
+    #   longer argument not a multiple of length of shorter
+    # 2: In pmax(sapply(ones, function(x) strwidth(label.norm, cex = x)),  :
+    #   an argument will be fractionally recycled
+    # 3: In mapply(strheight, s = labels, cex = ones) :
+    #   longer argument not a multiple of length of shorter
+    # 4: In pmax(sapply(ones, function(x) strheight(label.norm, cex = x)),  :
+    #   an argument will be fractionally recycled
+    # 5: In (VWidths * label.fill.horizontal)/LWidths :
+    #   longer object length is not a multiple of shorter object length
+    # 6: In (VHeights * label.fill.vertical)/LHeights :
+    #   longer object length is not a multiple of shorter object length
+    # 7: In label.cex * label.prop * pmin((VWidths * label.fill.horizontal)/LWidths,  :
+    #   longer object length is not a multiple of shorter object length
+  
 var_res_ls     <- indSEM(dat_mat_ls, "./results/gimme/raw/",
                          ar = TRUE, VAR = TRUE)
 
@@ -151,13 +168,6 @@ var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/raw_std/",
 
 
 # TODO: Confirm whether "beta.std" and "se" is completely standardized solution
-
-
-
-
-
-# TODO: Create adjacency matrices in separate script
-
 
 
 

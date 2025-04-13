@@ -1004,7 +1004,8 @@ pred_study_max_one_bl_others_gimme <-
 # - Optional: If starting from one time point and pred_df2 is given, plot two sets of 
 #   predicted values, one set in green from pred_df (e.g., from perturbed starting 
 #   values) and one set in blue from pred_df2 (e.g., from unperturbed starting values)
-# - Optional: Restrict displayed range of time points (view_t_min and view_t_max)
+# - Optional: Restrict displayed range of time points (view_t_min and view_t_max).
+#   Otherwise, plot will start at 0 and end at maximum "t" of pred_df1.
 # - Optional: For "k" predicted values starting from many time points, use a different 
 #   color for each iteration (iter_colors = TRUE)
 
@@ -1012,25 +1013,23 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
                           pred_df2 = NULL, view_t_min = NULL, view_t_max = NULL, iter_colors = NULL) {
   obs_df$t <- 1:nrow(obs_df)
   
-  # Optionally restrict displayed range of time points
-  
-  if (!is.null(view_t_min) & !is.null(view_t_max)) {
-    obs_df   <- obs_df[obs_df$t     >= view_t_min & obs_df$t   <= view_t_max, ]
-    pred_df1 <- pred_df1[pred_df1$t >= view_t_min & pred_df1$t <= view_t_max, ]
-    
-    if (!is.null(pred_df2)) {
-      pred_df2 <- pred_df2[pred_df2$t >= view_t_min & pred_df2$t <= view_t_max, ]
-    }
-  }
-  
   # Define plot settings
   
   xlab <- "Time"
-  ylab <- expression("Centered Value " / italic("SD"))
+  ylab <- expression(paste("Centered Value / ", italic("SD")))
+  xlim_ll <- 0
+  xlim_ul <- max(pred_df1$t)
   ylim_ll <- -10
   ylim_ul <- 10
   lwd <- 1.5
   pch <- 16
+  
+    # Optionally restrict displayed range of time points
+  
+  if (!is.null(view_t_min) & !is.null(view_t_max)) {
+    xlim_ll <- ifelse(view_t_min == 1, 0, view_t_min)
+    xlim_ul <- view_t_max
+  }
   
   if (pred_start_t_points == "one") {
     color_pred1 <- "green"
@@ -1106,8 +1105,8 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     
     # Start with empty plot
     
-    plot(pred_df1$t, pred_df1[, pred_col], main = var_label, 
-         type = "n", xlab = xlab, ylab = ylab, ylim = c(ylim_ll, ylim_ul))
+    plot(pred_df1$t, pred_df1[, pred_col], main = var_label, type = "n", 
+         xlab = xlab, ylab = ylab, xlim = c(xlim_ll, xlim_ul), ylim = c(ylim_ll, ylim_ul))
     
     mtext(plot_title, side = 3, line = -1, outer = TRUE)
     
@@ -1153,28 +1152,16 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     
     points(obs_df$t, obs_df[, obs_col])
     
-    # TODO (Consider making this optional): Overlay weekend indicator at upper limit of "ylim" to explore weekend effects
+    # TODO (Consider making this optional): Overlay weekend indicator just below
+    # upper limit of "ylim" (i.e., "ylim_ul" - 0.5) to explore weekend effects
     
-      # TODO: Fix this so "W:" displays even when x-axis range is restricted to start at 0
+    text(x = xlim_ll, y = ylim_ul, labels = "W:", cex = .5)
     
-    
-    
-    
-    
-    text(x = 0, y = ylim_ul, labels = "W:", cex = .5)
-    
-    obs_df$response_time_wend[obs_df$response_time_wend == 1] <- ylim_ul
+    obs_df$response_time_wend[obs_df$response_time_wend == 1] <- ylim_ul - 0.5
     
     points(obs_df$t, obs_df$response_time_wend, pch = 95, cex = .6)
     
-    # TODO (Consider making this optional): Print median of raw observed column
-    
-      # TODO: Fix this so that median is based on all data, not just restricted
-      # data when time point range is restricted (and label it as such)
-    
-    
-    
-    
+    # TODO (Consider making this optional): Print median of all raw observed values
     
     raw_obs_col_median <- median(obs_df[, raw_obs_col], na.rm = TRUE)
     
@@ -1184,7 +1171,7 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
       detrend_label <- NULL
     }
     
-    mtext(paste("Raw Uncentered Median:", raw_obs_col_median, detrend_label), 
+    mtext(paste("Raw Uncentered Obs. Median:", raw_obs_col_median, detrend_label),
           side = 3, line = 0, adj = 0, cex = .5)
   }
   
@@ -1304,12 +1291,6 @@ plot_pred_obs_various_bl_start <- function(various_pred_lists, dat_ls, obs_var_s
 
 # Run function
 
-  # TODO: Fix display of "W:" in "plot_pred_obs" above when min is 0
-
-
-
-
-
   # For participant's max for one node and 0 for others (run for only Mplus results so far)
 
 plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, dat_ls, "_d_scl",
@@ -1344,13 +1325,6 @@ plot_pred_obs_various_bl_start(pred_study_max_one_bl_others_gimme,    dat_ls, "_
                                "pred_study_max_one_bl_others_1-20", "gimme",
                                'Through 20 for GIMME Starting From Max "pred_list_focal_var_label" and BL Otherwise (ID ',
                                pred_study_bl_gimme, 1, 20)
-
-  # TODO: Fix "plot_pred_obs" above so that displayed raw uncentered median is based 
-  # on all observed data, not on restricted time point range (and label it as such)
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Plot signed prediction errors at each "iter_t" ----

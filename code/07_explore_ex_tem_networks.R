@@ -1223,12 +1223,32 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     raw_obs_col_median <- median(obs_df[, raw_obs_col], na.rm = TRUE)
     
     if (raw_obs_col_median %in% c(0, 100)) {
-      detrend_label <- "(Not Detrended Per Prior Criterion)"
+      old_detrend_label <- "(Not Detrended Per Prior Criterion)"
+    } else {
+      old_detrend_label <- NULL
+    }
+    
+    mtext(paste("Raw Uncentered Obs. Mdn:", raw_obs_col_median, old_detrend_label),
+          side = 3, line = 0.5, adj = 0, cex = .5)
+    
+    # TODO: Print percentage of observed values +/- 3 units from median
+    
+    mdn_thres_ll <- raw_obs_col_median - 3
+    mdn_thres_ul <- raw_obs_col_median + 3
+    
+    prop_in_mdn_thres <-
+      sum(obs_df[, raw_obs_col] >= mdn_thres_ll & obs_df[, raw_obs_col] <= mdn_thres_ul, na.rm = TRUE) / 
+      sum(!is.na(obs_df[, raw_obs_col]))
+    
+    perc_in_mdn_thres <- round(prop_in_mdn_thres * 100, 1)
+    
+    if (prop_in_mdn_thres >= .7) {
+      detrend_label <- "(Not Detrended)"
     } else {
       detrend_label <- NULL
     }
     
-    mtext(paste("Raw Uncentered Obs. Mdn:", raw_obs_col_median, detrend_label),
+    mtext(paste("% Raw Uncentered Obs. \u00B1 3 From Mdn:", perc_in_mdn_thres, detrend_label),
           side = 3, line = 0, adj = 0, cex = .5)
   }
   

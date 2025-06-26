@@ -55,8 +55,12 @@ dat$response_wend[is.na(dat$response_wday)]            <- NA
 # ---------------------------------------------------------------------------- #
 
 # In "ttt-p1-main-analysis" repo, linear trends were removed (creating "_d" variables).
-# Now try centering by both (a) removing linear trend if median is not 0 or 100 (otherwise, 
-# the variable seems unipolar) and (b) removing weekend effect (creating "_d2" variables).
+# Now try centering by both (a) removing linear trend if most (i.e., >= 70%) of observations
+# are not close (i.e., +/- 3 units from median; otherwise, remove median) and (b) removing 
+# weekend effect (creating "_d2" variables). In prior version of "_d2" variables, we removed 
+# linear trend if median was not 0 or 100 (as such variables seemed unipolar), and removed 
+# weekend effect, but a variable could still be unipolar if its median is not exactly 0 or 
+# 100 (thus our new method independent of median's value).
 
 vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
 
@@ -72,13 +76,39 @@ for (var in vars) {
     
     part_data <- subset(dat, lifepak_id == participant)
     
+    # Compute proportion of observations +/- 3 units from median     # TODO: Finalize thresholds
+    
+    mdn <- median(part_data[[var]], na.rm = TRUE)
+    
+    mdn_thres_ll <- mdn - 3
+    mdn_thres_ul <- mdn + 3
+    
+    prop_in_mdn_thres <-
+      sum(part_data[[var]] >= mdn_thres_ll & part_data[[var]] <= mdn_thres_ul, na.rm = TRUE) / 
+      sum(!is.na(part_data[[var]]))
+    
     # Fit linear model
     
-    median <- median(part_data[[var]], na.rm = TRUE)
-    
-    if (median %in% c(0, 100)) {
-      fit <- lm(part_data[[var]] ~ part_data$response_wend, data = part_data)
+    if (prop_in_mdn_thres >= .7) {                                   # TODO: Finalize thresholds
+      # Print median for relevant example participants and variables
+      
+      if (participant %in% c("272769", "861114", "326177")) {
+        cat("Mdn for example lifepak_id", participant, "variable", var, ":", mdn, "\n")
+      }
+      
+      # TODO: Print median for all relevant participants and variables
+      
+      # cat("Mdn for lifepak_id", participant, "variable", var, ":", mdn, "\n")
+      
+      # Remove median and weekend effect
+      
+      part_data$var_mdn_rm <- NA
+      part_data$var_mdn_rm <- part_data[[var]] - mdn
+      
+      fit <- lm(part_data$var_mdn_rm ~ part_data$response_wend, data = part_data)
     } else {
+      # Remove linear trend and weekend effect
+      
       fit <- lm(part_data[[var]] ~ part_data$bin_no_adj + part_data$response_wend, data = part_data)
     }
     

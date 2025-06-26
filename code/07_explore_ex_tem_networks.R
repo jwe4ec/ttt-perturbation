@@ -1223,12 +1223,12 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     raw_obs_col_median <- median(obs_df[, raw_obs_col], na.rm = TRUE)
     
     if (raw_obs_col_median %in% c(0, 100)) {
-      detrend_label <- "(Not Detrended)"
+      detrend_label <- "(Not Detrended Per Prior Criterion)"
     } else {
       detrend_label <- NULL
     }
     
-    mtext(paste("Raw Uncentered Obs. Median:", raw_obs_col_median, detrend_label),
+    mtext(paste("Raw Uncentered Obs. Mdn:", raw_obs_col_median, detrend_label),
           side = 3, line = 0, adj = 0, cex = .5)
   }
   

@@ -37,18 +37,18 @@ load("./data/from_ttt-p1-main-analysis/final_clean/data_var_perturb.RDS")
 dat <- data_var_perturb
 
 # ---------------------------------------------------------------------------- #
-# Compute day of "response_time" and weekend indicator ----
+# Compute day of "response_end_datetime" and weekend indicator ----
 # ---------------------------------------------------------------------------- #
 
-dat$response_time_wday <- weekdays(as.Date(dat$response_time))
+dat$response_wday <- weekdays(as.Date(dat$response_end_datetime))
 
 # Compute weekend indicator
 
 wend_days <- c("Saturday", "Sunday")
 
-dat$response_time_wend[dat$response_time_wday %in% wend_days]    <- 1
-dat$response_time_wend[!(dat$response_time_wday %in% wend_days)] <- 0
-dat$response_time_wend[is.na(dat$response_time_wday)]            <- NA
+dat$response_wend[dat$response_wday %in% wend_days]    <- 1
+dat$response_wend[!(dat$response_wday %in% wend_days)] <- 0
+dat$response_wend[is.na(dat$response_wday)]            <- NA
 
 # ---------------------------------------------------------------------------- #
 # Center each variable separately for each participant  ----
@@ -77,9 +77,9 @@ for (var in vars) {
     median <- median(part_data[[var]], na.rm = TRUE)
     
     if (median %in% c(0, 100)) {
-      fit <- lm(part_data[[var]] ~ part_data$response_time_wend, data = part_data)
+      fit <- lm(part_data[[var]] ~ part_data$response_wend, data = part_data)
     } else {
-      fit <- lm(part_data[[var]] ~ part_data$bin_no_adj + part_data$response_time_wend, data = part_data)
+      fit <- lm(part_data[[var]] ~ part_data$bin_no_adj + part_data$response_wend, data = part_data)
     }
     
     # Calculate residuals for non-NA values

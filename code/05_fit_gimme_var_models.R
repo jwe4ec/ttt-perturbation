@@ -83,9 +83,9 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 
   # Specifying ar = FALSE and VAR = FALSE (error)
 
-# test    <- indSEM(dat_mat_ls, "./results/test_gimme_none/",    # TODO: Error in `[.data.frame`(x, r, vars, drop = drop) : 
+# test    <- indSEM(dat_mat_ls, "./results/test_gimme_none/",    # TODO: Error in `[.data.frame`(x, r, vars, drop = drop) :
 #                   ar = FALSE, standardize = TRUE, VAR = FALSE) #         undefined columns selected
-
+# 
 # sink(file = "./results/test_gimme_none/test_gimme_none_syntax.txt")
 # test$syntax[[1]]
 # sink()
@@ -103,9 +103,9 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 
   # Specifying ar = FALSE and VAR = TRUE (error)
 
-# test_var <- indSEM(dat_mat_ls, "./results/test_gimme_var/",    # TODO: Error in `[.data.frame`(x, r, vars, drop = drop) : 
+# test_var <- indSEM(dat_mat_ls, "./results/test_gimme_var/",    # TODO: Error in `[.data.frame`(x, r, vars, drop = drop) :
 #                    ar = FALSE, standardize = TRUE, VAR = TRUE) #         undefined columns selected
-
+# 
 # sink(file = "test_gimme_var_syntax.txt")
 # test_var$syntax[[1]]
 # sink()
@@ -120,10 +120,6 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 # sink()
 
 # plot(test_ar_var$plots[[1]]) # Lagged relations seem to have dashed edges
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Fit GIMME idiographic VAR models ----
@@ -168,6 +164,7 @@ var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/raw_std/",
 
 
 # TODO: Confirm whether "beta.std" and "se" is completely standardized solution
+
 
 
 

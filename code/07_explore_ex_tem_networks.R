@@ -553,6 +553,7 @@ median(dat_ls$"326177"$bad_d_scl, na.rm = TRUE)
 
 
 
+
 # ---------------------------------------------------------------------------- #
 # Find first time point with complete observations in data ----
 # ---------------------------------------------------------------------------- #
@@ -1581,6 +1582,86 @@ lapply(names(diff_over_obs_sd_study_4_gimme),     function(lifepak_id) {
                         paste0("diff_over_obs_sd_study_4_gimme_", lifepak_id),
                         paste0("Fit for Next 3 Through Study for GIMME Starting From Each Obs. Value (ID ", lifepak_id, ")"))
 })
+
+# ---------------------------------------------------------------------------- #
+# Create 7-day plots to explore weekend effect ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Compute 67 predicted values for saturated Mplus networks (about 21 days) starting 
+# from participant's centered values at each time point
+
+
+
+
+
+pred_study_7_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 7, n_study_timepoints[[lifepak_id]], "_d_scl")
+})
+
+names(pred_study_7_satur) <- names(satur_adj_mats_var)
+
+# Define function to prepare data for 7-day plots to explore weekend effect
+
+prep_dat_wend_plots <- function(part_data, pred, obs_var_suf) {
+  # Merge predicted values with observed data
+  
+  names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
+  
+  target_meta_cols <- c("t", "notification_datetime", "response_end_datetime", "response_wday", "response_wend")
+  
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  target_var_cols <- paste0(vars, obs_var_suf)
+  
+  part_data_tmp <- part_data[, c(target_meta_cols, target_var_cols)]
+  
+  pred <- merge(pred, part_data_tmp, by = "t", all.x = TRUE)
+  pred <- pred[order(pred$iter, pred$iter_t), ]
+  
+  # Label each iteration's predicted values with weekday of its starting value
+  
+  tmp_df <- pred[pred$iter_t == 1, c("iter", "iter_t", "response_wday")]
+  tmp_df$iter_start_wday <- tmp_df$response_wday
+  tmp_df <- tmp_df[c("iter", "iter_start_wday")]
+  
+  pred <- merge(pred, tmp_df, "iter", all.x = TRUE)
+  
+  # Restrict to iterations with starting values on a Friday or Monday
+  
+  dat_wend_plots <- pred[pred$iter_start_wday %in% c("Friday", "Monday"), ]
+  
+  return(dat_wend_plots)
+}
+
+# TODO (update with 67 predicted values): Run function
+
+
+
+
+
+dat_wend_plots <- lapply(names(dat_ls), function(lifepak_id) {
+  prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_7_satur[[lifepak_id]], "_d_scl")
+})
+
+names(dat_wend_plots) <- names(dat_ls)
+
+# Define function to create 7-day plots to explore weekend effect
+
+create_wend_plots <- function(dat_wend_plots) {
+  # TODO
+  
+  
+  
+  
+  
+}
+
+# TODO: Run function
+
+# lapply(dat_wend_plots, create_wend_plots)
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

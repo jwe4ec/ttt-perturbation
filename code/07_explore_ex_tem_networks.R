@@ -28,7 +28,7 @@ groundhog_day <- version_control()
 
 # Load packages and set seed
 
-pkgs <- c("qgraph", "randomcoloR", "tidyr", "ggplot2", "cowplot")
+pkgs <- c("qgraph", "randomcoloR", "tidyr", "ggplot2", "cowplot", "colorspace")
 groundhog.library(pkgs, groundhog_day)
 
 set.seed(1234)
@@ -1584,25 +1584,21 @@ lapply(names(diff_over_obs_sd_study_4_gimme),     function(lifepak_id) {
 })
 
 # ---------------------------------------------------------------------------- #
-# Create 7-day plots to explore weekend effect ----
+# Create plots to explore weekend effect ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Compute 67 predicted values for saturated Mplus networks (about 21 days) starting 
+# Compute 20 predicted values for saturated Mplus networks (about 2 days) starting 
 # from participant's centered values at each time point
 
-
-
-
-
-pred_study_7_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
-  compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 7, n_study_timepoints[[lifepak_id]], "_d_scl")
+pred_study_20_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 20, n_study_timepoints[[lifepak_id]], "_d_scl")
 })
 
-names(pred_study_7_satur) <- names(satur_adj_mats_var)
+names(pred_study_20_satur) <- names(satur_adj_mats_var)
 
-# Define function to prepare data for 7-day plots to explore weekend effect
+# Define function to prepare data for plots to explore weekend effect
 
-prep_dat_wend_plots <- function(part_data, pred, obs_var_suf) {
+prep_dat_wend_plots <- function(part_data, pred, obs_var_suf, wday1, wday2) {
   # Merge predicted values with observed data
   
   names(part_data)[names(part_data) == "bin_no_adj"] <- "t"
@@ -1625,43 +1621,202 @@ prep_dat_wend_plots <- function(part_data, pred, obs_var_suf) {
   
   pred <- merge(pred, tmp_df, "iter", all.x = TRUE)
   
-  # Restrict to iterations with starting values on a Friday or Monday
+  # Restrict to iterations with starting values on "wday1" or "wday2"
   
-  dat_wend_plots <- pred[pred$iter_start_wday %in% c("Friday", "Monday"), ]
+  wend_plot_df <- pred[pred$iter_start_wday %in% c(wday1, wday2), ]
   
-  return(dat_wend_plots)
+  return(wend_plot_df)
 }
 
-# TODO (update with 67 predicted values): Run function
+# Run function
 
-
-
-
-
-dat_wend_plots <- lapply(names(dat_ls), function(lifepak_id) {
-  prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_7_satur[[lifepak_id]], "_d_scl")
+wend_plot_dfs_fri_mon <- lapply(names(dat_ls), function(lifepak_id) {
+  prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_satur[[lifepak_id]], "_d_scl", "Friday", "Monday")
+})
+wend_plot_dfs_fri_sun <- lapply(names(dat_ls), function(lifepak_id) {
+  prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_satur[[lifepak_id]], "_d_scl", "Friday", "Sunday")
+})
+wend_plot_dfs_fri_sat <- lapply(names(dat_ls), function(lifepak_id) {
+  prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_satur[[lifepak_id]], "_d_scl", "Friday", "Saturday")
 })
 
-names(dat_wend_plots) <- names(dat_ls)
+names(wend_plot_dfs_fri_mon) <- names(dat_ls)
+names(wend_plot_dfs_fri_sun) <- names(dat_ls)
+names(wend_plot_dfs_fri_sat) <- names(dat_ls)
 
-# Define function to create 7-day plots to explore weekend effect
+# Define function to create plots to explore weekend effect
+# - Starting from one time point or (for "k" predicted values) starting from many 
+#   (pred_start_t_points = "one" or "many")
+# - Optional: For "k" predicted values starting from many time points, use a different 
+#   color for each iteration ("iter_colors = TRUE")
 
-create_wend_plots <- function(dat_wend_plots) {
-  # TODO
+create_wend_plot <- function(wend_plot_df, obs_var_suf, pred_start_t_points, wday1, wday2,
+                             plot_name, plot_title, iter_colors_by_wday = NULL) {
+  df <- wend_plot_df
   
+  df$t_from_start <- NA
+  df$t_from_start <- df$iter_t - 1
   
+  # Define plot settings
   
+  t_from_start_values <- unique(df$t_from_start)
   
+  xlab <- "Time Points From Starting Time Point"
+  ylab <- expression(paste("Centered Value / ", italic("SD")))
+  xlim_ll <- 0
+  xlim_ul <- max(t_from_start_values)
+  ylim_ll <- -10
+  ylim_ul <- 10
+  lwd <- 1.5
+  pch <- 16
   
+  if (pred_start_t_points == "one") {
+    color_pred_wday1 <- "#3B809A"
+    color_pred_wday2 <- "#F17B51"
+  } else if (pred_start_t_points == "many") {
+    n_iterations_wday1 <- length(unique(df$iter[df$iter_start_wday == wday1]))
+    n_iterations_wday2 <- length(unique(df$iter[df$iter_start_wday == wday2]))
+    
+    if (is.null(iter_colors_by_wday)) {
+      color_pred_wday1 <- rep("#3B809A", n_iterations_wday1)
+      color_pred_wday2 <- rep("#F17B51", n_iterations_wday2)
+    } else if (iter_colors_by_wday == TRUE) {
+      set.seed(1234)
+      color_pred_wday1 <- sequential_hcl(n_iterations_wday1, palette = "Teal")
+      color_pred_wday2 <- sequential_hcl(n_iterations_wday2, palette = "Peach")
+    }
+    
+    color_pred_wday1 <- adjust_transparency(color_pred_wday1, .5)
+    color_pred_wday2 <- adjust_transparency(color_pred_wday2, .5)
+  }
+  
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  
+  var_labels <- vars
+  
+  var_labels[var_labels == "bad"]      <- "Bad Self"
+  var_labels[var_labels == "control"]  <- "Lack Control"
+  var_labels[var_labels == "energy"]   <- "Fatigue"
+  var_labels[var_labels == "focus"]    <- "Lack Focus"
+  var_labels[var_labels == "fun"]      <- "Inaction"
+  var_labels[var_labels == "interest"] <- "Lack Interest"
+  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
+  var_labels[var_labels == "sad"]      <- "Sad"
+  
+  pred_cols    <- paste0(vars, "_pred")
+  obs_cols     <- paste0(vars, obs_var_suf)
+
+  # Check that y-axis spans range of observed and predicted values
+  
+  obs_cols_min  <- min(df[, obs_cols],  na.rm = TRUE)
+  obs_cols_max  <- max(df[, obs_cols],  na.rm = TRUE)
+  
+  pred_cols_min <- min(df[, pred_cols], na.rm = TRUE)
+  pred_cols_max <- max(df[, pred_cols], na.rm = TRUE)
+  
+  overall_min   <- min(obs_cols_min, pred_cols_min)
+  overall_max   <- max(obs_cols_max, pred_cols_max)
+  
+  if (overall_min < ylim_ll) {
+    stop(paste0("Make lower limit of 'ylim' <= ", overall_min))
+  }
+  if (overall_max > ylim_ul) {
+    stop(paste0("Make upper limit of 'ylim' >= ", overall_max))
+  }
+  
+  # Create plots
+  
+  pdf(paste0("./results/pred_values/wend_effect/", plot_name, ".pdf"))
+  
+  par(mfrow = c(2, 2))
+  
+  for (i in 1:length(vars)) {
+    pred_col    <- pred_cols[i]
+    obs_col     <- obs_cols[i]
+    var_label   <- var_labels[i]
+    
+    # Start with empty plot
+    
+    plot(df$t_from_start, df[, pred_col], main = var_label, type = "n", 
+         xlab = xlab, ylab = ylab, xlim = c(xlim_ll, xlim_ul), ylim = c(ylim_ll, ylim_ul))
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+    
+    # Create separate data frame for each weekday
+    
+    df_wday1 <- df[df$iter_start_wday == wday1, ]
+    df_wday2 <- df[df$iter_start_wday == wday2, ]
+    
+    # Plot predicted values
+    
+    if (pred_start_t_points == "one") {
+      lines(df_wday1$t_from_start, df_wday1[, pred_col], lwd = lwd, col = color_pred_wday1)
+      lines(df_wday2$t_from_start, df_wday2[, pred_col], lwd = lwd, col = color_pred_wday2)
+    } else if (pred_start_t_points == "many") {
+      iters_wday1 <- unique(df_wday1$iter)
+      iters_wday2 <- unique(df_wday2$iter)
+      
+      for (j in 1:n_iterations_wday1) {
+        iter_pred  <- df_wday1[df_wday1$iter == iters_wday1[j], ]
+        iter_color <- color_pred_wday1[j]
+
+        lines(iter_pred$t_from_start, iter_pred[, pred_col], lwd = lwd, col = iter_color)
+      }
+      for (j in 1:n_iterations_wday2) {
+        iter_pred  <- df_wday2[df_wday2$iter == iters_wday2[j], ]
+        iter_color <- color_pred_wday2[j]
+        
+        lines(iter_pred$t_from_start, iter_pred[, pred_col], lwd = lwd, col = iter_color)
+      }
+    }
+    
+    # TODO (consider removing): Plot observed values as points
+    
+    # points(df$t_from_start, df[, obs_col])
+    
+    # TODO (maybe put in plot): Add legend
+    
+    mtext(paste(wday1, "Starts: Teal;", wday2, "Starts: Peach"),
+          side = 3, line = 0, adj = 0, cex = .5)
+  }
+  
+  par(mfrow = c(1, 1))
+  
+  dev.off()
 }
 
-# TODO: Run function
+# Run function
 
-# lapply(dat_wend_plots, create_wend_plots)
+dir.create("./results/pred_values/wend_effect/")
 
+  # For saturated Mplus networks
 
+    # For 20 predicted values starting from each time point on a Friday or Monday
 
+lapply(names(wend_plot_dfs_fri_mon), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_fri_mon[[lifepak_id]], "_d_scl", "many", "Friday", "Monday",
+                   paste0("wend_pred_study_20_satur_fri_mon_iter_colors_", lifepak_id),
+                   paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Mon. (ID ", lifepak_id, ")"),
+                   iter_colors_by_wday = TRUE)
+})
 
+  # For 20 predicted values starting from each time point on a Friday or Sunday
+
+lapply(names(wend_plot_dfs_fri_sun), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_fri_sun[[lifepak_id]], "_d_scl", "many", "Friday", "Sunday",
+                   paste0("wend_pred_study_20_satur_fri_sun_iter_colors_", lifepak_id),
+                   paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sun. (ID ", lifepak_id, ")"),
+                   iter_colors_by_wday = TRUE)
+})
+
+  # For 20 predicted values starting from each time point on a Friday or Saturday
+
+lapply(names(wend_plot_dfs_fri_sat), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_fri_sat[[lifepak_id]], "_d_scl", "many", "Friday", "Saturday",
+                   paste0("wend_pred_study_20_satur_fri_sat_iter_colors_", lifepak_id),
+                   paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sat. (ID ", lifepak_id, ")"),
+                   iter_colors_by_wday = TRUE)
+})
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

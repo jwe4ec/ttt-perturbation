@@ -680,6 +680,73 @@ compute_pred <- function(adj_mat, n_timepoints, start_list, start_timepoint = 1)
   return(pred)
 }
 
+# TODO: Testing same function using matrices
+
+compute_pred_via_matrices <- function(adj_mat, n_timepoints, start_list, start_timepoint = 1) {
+  # Initialize columns with NA for desired number of time points
+  
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  vars_pred <- paste0(vars, "_pred")
+  
+  pred_mat <- matrix(NA, nrow = n_timepoints, ncol = 8, dimnames = list(NULL, vars_pred))
+  
+  # Compute predicted values for desired number of time points, starting from given time point
+  
+  for (i in start_timepoint:n_timepoints) {
+    if (i == start_timepoint) {
+      pred_mat[i, "bad_pred"]      <- start_list$bad
+      pred_mat[i, "control_pred"]  <- start_list$control
+      pred_mat[i, "energy_pred"]   <- start_list$energy
+      pred_mat[i, "focus_pred"]    <- start_list$focus
+      pred_mat[i, "fun_pred"]      <- start_list$fun
+      pred_mat[i, "interest_pred"] <- start_list$interest
+      pred_mat[i, "movement_pred"] <- start_list$movement
+      pred_mat[i, "sad_pred"]      <- start_list$sad
+    } else if (i > start_timepoint) {
+      vars_l1 <- paste0(vars, "_l1")
+      
+      l1_mat <- matrix(NA, nrow = 1, ncol = 8, dimnames = list(NULL, vars_l1))
+      
+      l1_mat[1, "bad_l1"]      <- pred_mat[i - 1, "bad_pred"]
+      l1_mat[1, "control_l1"]  <- pred_mat[i - 1, "control_pred"]
+      l1_mat[1, "energy_l1"]   <- pred_mat[i - 1, "energy_pred"]
+      l1_mat[1, "focus_l1"]    <- pred_mat[i - 1, "focus_pred"]
+      l1_mat[1, "fun_l1"]      <- pred_mat[i - 1, "fun_pred"]
+      l1_mat[1, "interest_l1"] <- pred_mat[i - 1, "interest_pred"]
+      l1_mat[1, "movement_l1"] <- pred_mat[i - 1, "movement_pred"]
+      l1_mat[1, "sad_l1"]      <- pred_mat[i - 1, "sad_pred"]
+      
+      pred_mat[i, ] <- l1_mat %*% adj_mat
+    }
+  }
+  
+  pred <- data.frame(t = 1:n_timepoints,
+                     as.data.frame(pred_mat))
+  
+  return(pred)
+}
+
+
+# TODO: Compare outputs of two functions
+
+pred_study_bl_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
+  compute_pred(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], 
+               start_list_bl_d_scl[[lifepak_id]], first_compl_row_idx_d_scl[[lifepak_id]])
+})
+
+test <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
+  compute_pred_via_matrices(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], 
+               start_list_bl_d_scl[[lifepak_id]], first_compl_row_idx_d_scl[[lifepak_id]])
+})
+
+names(pred_study_bl_thres_a05) <- names(thres_adj_mats_var)
+names(test) <- names(thres_adj_mats_var)
+
+identical(pred_study_bl_thres_a05, test)
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's centered values at baseline ----
 # ---------------------------------------------------------------------------- #

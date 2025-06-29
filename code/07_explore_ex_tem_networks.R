@@ -595,94 +595,15 @@ define_start <- function(part_data, j, obs_var_suf) {
 # Define function to compute predicted values ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Try streamlining this by multiplying adjacency matrix by vector of starting values
+# Define function to compute predicted values over desired number of time points
+# ("n_timepoints") from adjacency matrix and desired starting values
+# - Start from a given time point ("start_timepoint"; 1 by default)
+# - By default, assume an adjacency matrix whose rows are inputs and columns are
+#   outputs, with option to use adjacency matrix whose columns are inputs and rows 
+#   are outputs ("adj_mat_cols_as_inputs = TRUE")
 
-# row_vars * mat_col_1
-# row_vars * mat_col_2
-# row_vars * mat_col_3
-# row_vars * mat_col_4
-# row_vars * mat_col_5
-# row_vars * mat_col_6
-# row_vars * mat_col_7
-# row_vars * mat_col_8
-# 
-# current (with rows as inputs and cols as outputs): have to premultiply
-# row_vars as 1-by-8 mat * coefs as 8-by-8 mat = pred as 1-by-8 mat
-# 
-# new (with cols as inputs and rows at outputs): have to postmultiply
-# coefs as 8-by-8 mat * row_vars as 8-by-1 mat = pred as 8-by-1 mat
-
-
-
-
-
-# Define function to compute predicted values over desired number of time points 
-# from adjacency matrix and desired starting values (starting from a given time 
-# point; 1 by default)
-
-compute_pred <- function(adj_mat, n_timepoints, start_list, start_timepoint = 1) {
-  # Initialize vectors with NA for desired number of time points
-  
-  init_vec      <- rep(NA, n_timepoints)
-  
-  bad_pred      <- init_vec
-  control_pred  <- init_vec
-  energy_pred   <- init_vec
-  focus_pred    <- init_vec
-  fun_pred      <- init_vec
-  interest_pred <- init_vec
-  movement_pred <- init_vec
-  sad_pred      <- init_vec
-  
-  # Compute predicted values for desired number of time points, starting from given time point
-  
-  for (i in start_timepoint:n_timepoints) {
-    if (i == start_timepoint) {
-      bad_pred[i]      <- start_list$bad
-      control_pred[i]  <- start_list$control
-      energy_pred[i]   <- start_list$energy
-      focus_pred[i]    <- start_list$focus
-      fun_pred[i]      <- start_list$fun
-      interest_pred[i] <- start_list$interest
-      movement_pred[i] <- start_list$movement
-      sad_pred[i]      <- start_list$sad
-    } else if (i > start_timepoint) {
-      bad_l1      <- bad_pred[i - 1]
-      control_l1  <- control_pred[i - 1]
-      energy_l1   <- energy_pred[i - 1]
-      focus_l1    <- focus_pred[i - 1]
-      fun_l1      <- fun_pred[i - 1]
-      interest_l1 <- interest_pred[i - 1]
-      movement_l1 <- movement_pred[i - 1]
-      sad_l1      <- sad_pred[i - 1]
-      
-      bad_pred[i]      <- bad_l1*adj_mat["bad", "bad"]      + control_l1*adj_mat["control", "bad"]      + energy_l1*adj_mat["energy", "bad"]      + focus_l1*adj_mat["focus", "bad"]      + fun_l1*adj_mat["fun", "bad"]      + interest_l1*adj_mat["interest", "bad"]      + movement_l1*adj_mat["movement", "bad"]      + sad_l1*adj_mat["sad", "bad"]
-      control_pred[i]  <- bad_l1*adj_mat["bad", "control"]  + control_l1*adj_mat["control", "control"]  + energy_l1*adj_mat["energy", "control"]  + focus_l1*adj_mat["focus", "control"]  + fun_l1*adj_mat["fun", "control"]  + interest_l1*adj_mat["interest", "control"]  + movement_l1*adj_mat["movement", "control"]  + sad_l1*adj_mat["sad", "control"]
-      energy_pred[i]   <- bad_l1*adj_mat["bad", "energy"]   + control_l1*adj_mat["control", "energy"]   + energy_l1*adj_mat["energy", "energy"]   + focus_l1*adj_mat["focus", "energy"]   + fun_l1*adj_mat["fun", "energy"]   + interest_l1*adj_mat["interest", "energy"]   + movement_l1*adj_mat["movement", "energy"]   + sad_l1*adj_mat["sad", "energy"]
-      focus_pred[i]    <- bad_l1*adj_mat["bad", "focus"]    + control_l1*adj_mat["control", "focus"]    + energy_l1*adj_mat["energy", "focus"]    + focus_l1*adj_mat["focus", "focus"]    + fun_l1*adj_mat["fun", "focus"]    + interest_l1*adj_mat["interest", "focus"]    + movement_l1*adj_mat["movement", "focus"]    + sad_l1*adj_mat["sad", "focus"]
-      fun_pred[i]      <- bad_l1*adj_mat["bad", "fun"]      + control_l1*adj_mat["control", "fun"]      + energy_l1*adj_mat["energy", "fun"]      + focus_l1*adj_mat["focus", "fun"]      + fun_l1*adj_mat["fun", "fun"]      + interest_l1*adj_mat["interest", "fun"]      + movement_l1*adj_mat["movement", "fun"]      + sad_l1*adj_mat["sad", "fun"]
-      interest_pred[i] <- bad_l1*adj_mat["bad", "interest"] + control_l1*adj_mat["control", "interest"] + energy_l1*adj_mat["energy", "interest"] + focus_l1*adj_mat["focus", "interest"] + fun_l1*adj_mat["fun", "interest"] + interest_l1*adj_mat["interest", "interest"] + movement_l1*adj_mat["movement", "interest"] + sad_l1*adj_mat["sad", "interest"]
-      movement_pred[i] <- bad_l1*adj_mat["bad", "movement"] + control_l1*adj_mat["control", "movement"] + energy_l1*adj_mat["energy", "movement"] + focus_l1*adj_mat["focus", "movement"] + fun_l1*adj_mat["fun", "movement"] + interest_l1*adj_mat["interest", "movement"] + movement_l1*adj_mat["movement", "movement"] + sad_l1*adj_mat["sad", "movement"]
-      sad_pred[i]      <- bad_l1*adj_mat["bad", "sad"]      + control_l1*adj_mat["control", "sad"]      + energy_l1*adj_mat["energy", "sad"]      + focus_l1*adj_mat["focus", "sad"]      + fun_l1*adj_mat["fun", "sad"]      + interest_l1*adj_mat["interest", "sad"]      + movement_l1*adj_mat["movement", "sad"]      + sad_l1*adj_mat["sad", "sad"]
-    }
-  }
-  
-  pred <- data.frame(t             = 1:n_timepoints,
-                     bad_pred      = bad_pred,
-                     control_pred  = control_pred,
-                     energy_pred   = energy_pred,
-                     focus_pred    = focus_pred,
-                     fun_pred      = fun_pred,
-                     interest_pred = interest_pred,
-                     movement_pred = movement_pred,
-                     sad_pred      = sad_pred)
-  
-  return(pred)
-}
-
-# TODO: Testing same function using matrices
-
-compute_pred_via_matrices <- function(adj_mat, n_timepoints, start_list, start_timepoint = 1) {
+compute_pred <- function(adj_mat, n_timepoints, start_list, start_timepoint = 1,
+                         adj_mat_cols_as_inputs = FALSE) {
   # Initialize columns with NA for desired number of time points
   
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
@@ -691,7 +612,7 @@ compute_pred_via_matrices <- function(adj_mat, n_timepoints, start_list, start_t
   pred_mat <- matrix(NA, nrow = n_timepoints, ncol = 8, dimnames = list(NULL, vars_pred))
   
   # Compute predicted values for desired number of time points, starting from given time point
-  
+
   for (i in start_timepoint:n_timepoints) {
     if (i == start_timepoint) {
       pred_mat[i, "bad_pred"]      <- start_list$bad
@@ -716,7 +637,22 @@ compute_pred_via_matrices <- function(adj_mat, n_timepoints, start_list, start_t
       l1_mat[1, "movement_l1"] <- pred_mat[i - 1, "movement_pred"]
       l1_mat[1, "sad_l1"]      <- pred_mat[i - 1, "sad_pred"]
       
-      pred_mat[i, ] <- l1_mat %*% adj_mat
+      if (adj_mat_cols_as_inputs == FALSE) {
+        # Pre-multiply coefficients as 8-by-8 matrix by prior time point's values as 
+        # 1-by-8 matrix to get current time point's predicted values as 1-by-8 matrix
+        
+        pred_mat[i, ] <- l1_mat %*% adj_mat
+        
+      } else if (adj_mat_cols_as_inputs == TRUE) {
+        # Post-multiply coefficients as 8-by-8 matrix by prior time point's values as 
+        # 8-by-1 matrix to get current time point's predicted values as 8-by-1 matrix
+        
+        l1_mat_one_col <- t(l1_mat)
+        
+        pred_mat_i_one_col <- adj_mat %*% l1_mat_one_col
+        
+        pred_mat[i, ] <- t(pred_mat_i_one_col)
+      }
     }
   }
   
@@ -725,27 +661,6 @@ compute_pred_via_matrices <- function(adj_mat, n_timepoints, start_list, start_t
   
   return(pred)
 }
-
-
-# TODO: Compare outputs of two functions
-
-pred_study_bl_thres_a05 <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
-  compute_pred(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], 
-               start_list_bl_d_scl[[lifepak_id]], first_compl_row_idx_d_scl[[lifepak_id]])
-})
-
-test <- lapply(names(thres_adj_mats_var), function(lifepak_id) {
-  compute_pred_via_matrices(thres_adj_mats_var[[lifepak_id]], n_study_timepoints[[lifepak_id]], 
-               start_list_bl_d_scl[[lifepak_id]], first_compl_row_idx_d_scl[[lifepak_id]])
-})
-
-names(pred_study_bl_thres_a05) <- names(thres_adj_mats_var)
-names(test) <- names(thres_adj_mats_var)
-
-identical(pred_study_bl_thres_a05, test)
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Compute all predicted values starting from participant's centered values at baseline ----

@@ -377,6 +377,22 @@ save(retain_ids, file = "./data/temp/retain_ids.RDS")
 # TODO: Define function to test whether weekend indicator predicts missingness. For 
 # now, use presence/absence of "bad_d" as a proxy for that of all node variables.
 
+  # TODO: Test creation of time variables
+
+test <- dat
+
+test$notification_time <- format(test$notification_datetime, "%H:%M:%S")
+test$response_end_time <- format(test$response_end_datetime, "%H:%M:%S")
+
+max(test$notification_time, na.rm = TRUE) == "22:58:56"
+min(test$response_end_time, na.rm = TRUE) == "07:32:26"
+
+  # TODO: May need to analyze this in data prior to making it evenly spaced in time
+
+
+
+
+
 test_wend_miss <- function(part_data) {
   part_data$bad_miss <- NA
   
@@ -387,7 +403,6 @@ test_wend_miss <- function(part_data) {
   # TODO: Test whether weekend indicator (0 for weekday, 1 for weekend) predicts missingness
   
 }
-
 
 
 

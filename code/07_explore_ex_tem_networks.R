@@ -1064,7 +1064,8 @@ pred_study_max_one_bl_others_gimme <-
 # - Optional: For "k" predicted values starting from many time points, use a different 
 #   color for each iteration ("iter_colors = TRUE")
 
-plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pred_plot_type, plot_name, plot_title,
+plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pred_plot_type,
+                          plot_dir, plot_name, plot_title,
                           pred_df2 = NULL, view_t_min = NULL, view_t_max = NULL, iter_colors = NULL) {
   obs_df$t <- 1:nrow(obs_df)
   
@@ -1148,7 +1149,7 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
 
   # Create plots
   
-  pdf(paste0("./results/pred_values/", plot_name, ".pdf"))
+  pdf(paste0(plot_dir, plot_name, ".pdf"))
   
   par(mfrow = c(2, 2))
   
@@ -1296,31 +1297,35 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
 
 # Run function
 
-dir.create("./results/pred_values/")
+pred_values_path <- "./results/pred_values/"
+dir.create(pred_values_path)
 
   # For all predicted values starting from observed baseline values
+
+pred_values_from_bl_path <- paste0(pred_values_path, "from_bl/")
+dir.create(pred_values_from_bl_path)
 
     # For Mplus networks
 
 lapply(names(pred_study_bl_thres_a05), function(lifepak_id) {
   plot_pred_obs(pred_study_bl_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "_d_scl", "one", "l",
-                paste0("pred_study_bl_thres_a05_", lifepak_id),
+                pred_values_from_bl_path, paste0("pred_study_bl_thres_a05_", lifepak_id),
                 paste0("Through Study for Thresholded Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_thres_a05),   function(lifepak_id) {
   plot_pred_obs(pred_400_bl_thres_a05[[lifepak_id]],   dat_ls[[lifepak_id]], "_d_scl", "one", "l",
-                paste0("pred_400_bl_thres_a05_",   lifepak_id),
+                pred_values_from_bl_path, paste0("pred_400_bl_thres_a05_",   lifepak_id),
                 paste0("Through 400 for Thresholded Starting From Obs. Baseline Values (ID ",   lifepak_id, ")"))
 })
 
 lapply(names(pred_study_bl_satur),     function(lifepak_id) {
   plot_pred_obs(pred_study_bl_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "_d_scl", "one", "l",
-                paste0("pred_study_bl_satur_",     lifepak_id),
+                pred_values_from_bl_path, paste0("pred_study_bl_satur_",     lifepak_id),
                 paste0("Through Study for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 lapply(names(pred_400_bl_satur),       function(lifepak_id) {
   plot_pred_obs(pred_400_bl_satur[[lifepak_id]],       dat_ls[[lifepak_id]], "_d_scl", "one", "l",
-                paste0("pred_400_bl_satur_",       lifepak_id),
+                pred_values_from_bl_path, paste0("pred_400_bl_satur_",       lifepak_id),
                 paste0("Through 400 for Saturated Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 
@@ -1328,24 +1333,27 @@ lapply(names(pred_400_bl_satur),       function(lifepak_id) {
 
 lapply(names(pred_study_bl_gimme),     function(lifepak_id) {
   plot_pred_obs(pred_study_bl_gimme[[lifepak_id]],     dat_ls[[lifepak_id]], "_d2_scl", "one", "l",
-                paste0("pred_study_bl_gimme_",     lifepak_id),
+                pred_values_from_bl_path, paste0("pred_study_bl_gimme_",     lifepak_id),
                 paste0("Through Study for GIMME Starting From Obs. Baseline Values (ID ", lifepak_id, ")"))
 })
 
   # For 4 predicted values starting from each time point
 
+pred_values_from_each_t_path <- paste0(pred_values_path, "from_each_t/")
+dir.create(pred_values_from_each_t_path)
+
     # For Mplus networks
 
 lapply(names(pred_study_4_satur),     function(lifepak_id) {
   plot_pred_obs(pred_study_4_satur[[lifepak_id]],     dat_ls[[lifepak_id]], "_d_scl", "many", "l",
-                paste0("pred_study_4_satur_iter_colors_",          lifepak_id),
+                pred_values_from_each_t_path, paste0("pred_study_4_satur_iter_colors_",          lifepak_id),
                 paste0("Next 3 Through Study for Saturated Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
 
 lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
   plot_pred_obs(pred_study_4_thres_a05[[lifepak_id]], dat_ls[[lifepak_id]], "_d_scl", "many", "l",
-                paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
+                pred_values_from_each_t_path, paste0("pred_study_4_thres_a05_iter_colors_",      lifepak_id),
                 paste0("Next 3 Through Study for Thresholded Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
@@ -1354,7 +1362,7 @@ lapply(names(pred_study_4_thres_a05), function(lifepak_id) {
 
 lapply(names(pred_study_4_gimme),     function(lifepak_id) {
   plot_pred_obs(pred_study_4_gimme[[lifepak_id]],     dat_ls[[lifepak_id]], "_d2_scl", "many", "l",
-                paste0("pred_study_4_gimme_iter_colors_",          lifepak_id),
+                pred_values_from_each_t_path, paste0("pred_study_4_gimme_iter_colors_",          lifepak_id),
                 paste0("Next 3 Through Study for GIMME Starting From Each Obs. Value (ID ", lifepak_id, ")"),
                 iter_colors = TRUE)
 })
@@ -1370,7 +1378,7 @@ lapply(names(pred_study_4_gimme),     function(lifepak_id) {
 # - Optional: Restrict displayed range of time points ("view_t_min" and "view_t_max")
 
 plot_pred_obs_various_bl_start <- function(various_pred_lists, dat_ls, obs_var_suf, 
-                                           plot_name_stem, thres, plot_title_stem,
+                                           plot_dir, plot_name_stem, thres, plot_title_stem,
                                            pred_bl = NULL, view_t_min = NULL, view_t_max = NULL) {
   # Define label for the focal variable of each "pred_list"
   
@@ -1396,7 +1404,7 @@ plot_pred_obs_various_bl_start <- function(various_pred_lists, dat_ls, obs_var_s
     
     lapply(names(pred_list), function(lifepak_id) {
       plot_pred_obs(pred_list[[lifepak_id]], dat_ls[[lifepak_id]], obs_var_suf, "one", "l",
-                    paste0(plot_name_stem, "_", pred_list_name, "_", thres, "_", lifepak_id),
+                    plot_dir, paste0(plot_name_stem, "_", pred_list_name, "_", thres, "_", lifepak_id),
                     paste0(pred_list_plot_title_stem, lifepak_id, ")"),
                     pred_bl[[lifepak_id]], view_t_min, view_t_max)
     })
@@ -1407,36 +1415,42 @@ plot_pred_obs_various_bl_start <- function(various_pred_lists, dat_ls, obs_var_s
 
   # For participant's max for one node and 0 for others (run for only Mplus results so far)
 
+pred_values_max_one_0_others_path <- paste0(pred_values_path, "max_one_0_others/")
+dir.create(pred_values_max_one_0_others_path)
+
 plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, dat_ls, "_d_scl",
-                               "pred_study_max_one_0_others",      "thres_a05",
+                               pred_values_max_one_0_others_path, "pred_study_max_one_0_others",      "thres_a05",
                                'Through Study for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ',
                                pred_study_bl_thres_a05)
 plot_pred_obs_various_bl_start(pred_study_max_one_0_others_thres_a05, dat_ls, "_d_scl",
-                               "pred_study_max_one_0_others_1-20", "thres_a05",
+                               pred_values_max_one_0_others_path, "pred_study_max_one_0_others_1-20", "thres_a05",
                                'Through 20 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ',
                                pred_study_bl_thres_a05, 1, 20)
 plot_pred_obs_various_bl_start(pred_400_max_one_0_others_thres_a05,   dat_ls, "_d_scl",
-                               "pred_400_max_one_0_others",        "thres_a05",
+                               pred_values_max_one_0_others_path, "pred_400_max_one_0_others",        "thres_a05",
                                'Through 400 for Thres. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ',
                                pred_400_bl_thres_a05)
 
 plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     dat_ls, "_d_scl",
-                               "pred_study_max_one_0_others",      "satur",
+                               pred_values_max_one_0_others_path, "pred_study_max_one_0_others",      "satur",
                                'Through Study for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ',
                                pred_study_bl_satur)
 plot_pred_obs_various_bl_start(pred_study_max_one_0_others_satur,     dat_ls, "_d_scl",
-                               "pred_study_max_one_0_others_1-20", "satur",
+                               pred_values_max_one_0_others_path, "pred_study_max_one_0_others_1-20", "satur",
                                'Through 20 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ',
                                pred_study_bl_satur, 1, 20)
 plot_pred_obs_various_bl_start(pred_400_max_one_0_others_satur,       dat_ls, "_d_scl",
-                               "pred_400_max_one_0_others",        "satur",
+                               pred_values_max_one_0_others_path, "pred_400_max_one_0_others",        "satur",
                                'Through 400 for Satur. Starting From Max "pred_list_focal_var_label" and 0 Otherwise (ID ',
                                pred_400_bl_satur)
 
   # For participant's max for one node and baseline for others (run for only GIMME results so far)
 
+pred_values_max_one_bl_others_path <- paste0(pred_values_path, "max_one_bl_others/")
+dir.create(pred_values_max_one_bl_others_path)
+
 plot_pred_obs_various_bl_start(pred_study_max_one_bl_others_gimme,    dat_ls, "_d2_scl",
-                               "pred_study_max_one_bl_others_1-20", "gimme",
+                               pred_values_max_one_bl_others_path, "pred_study_max_one_bl_others_1-20", "gimme",
                                'Through 20 for GIMME Starting From Max "pred_list_focal_var_label" and BL Otherwise (ID ',
                                pred_study_bl_gimme, 1, 20)
 
@@ -1836,7 +1850,7 @@ lapply(names(wend_plot_dfs_fri_mon), function(lifepak_id) {
                    iter_colors_by_wday = TRUE)
 })
 
-  # For 20 predicted values starting from each time point on a Friday or Sunday
+  # TODO (keep these?): For 20 predicted values starting from each time point on a Friday or Sunday
 
 lapply(names(wend_plot_dfs_fri_sun), function(lifepak_id) {
   create_wend_plot(wend_plot_dfs_fri_sun[[lifepak_id]], "_d_scl", "many", "Friday", "Sunday",
@@ -1845,7 +1859,7 @@ lapply(names(wend_plot_dfs_fri_sun), function(lifepak_id) {
                    iter_colors_by_wday = TRUE)
 })
 
-  # For 20 predicted values starting from each time point on a Friday or Saturday
+  # TODO (keep these?): For 20 predicted values starting from each time point on a Friday or Saturday
 
 lapply(names(wend_plot_dfs_fri_sat), function(lifepak_id) {
   create_wend_plot(wend_plot_dfs_fri_sat[[lifepak_id]], "_d_scl", "many", "Friday", "Saturday",
@@ -1853,6 +1867,10 @@ lapply(names(wend_plot_dfs_fri_sat), function(lifepak_id) {
                    paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sat. (ID ", lifepak_id, ")"),
                    iter_colors_by_wday = TRUE)
 })
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

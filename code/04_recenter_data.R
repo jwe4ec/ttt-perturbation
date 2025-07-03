@@ -26,7 +26,9 @@ source("./code/01_define_functions.R")
 
 groundhog_day <- version_control()
 
-# No packages loaded
+# Load package
+
+groundhog.library(DescTools, groundhog_day)
 
 # ---------------------------------------------------------------------------- #
 # Import data ----
@@ -55,12 +57,15 @@ dat$response_wend[is.na(dat$response_wday)]            <- NA
 # ---------------------------------------------------------------------------- #
 
 # In "ttt-p1-main-analysis" repo, linear trends were removed (creating "_d" variables).
-# Now try centering by both (a) removing linear trend if most (i.e., >= 70%) of observations
-# are not close (i.e., +/- 3 units from median; otherwise, remove median) and (b) removing 
-# weekend effect (creating "_d2" variables). In prior version of "_d2" variables, we removed 
-# linear trend if median was not 0 or 100 (as such variables seemed unipolar), and removed 
-# weekend effect, but a variable could still be unipolar if its median is not exactly 0 or 
-# 100 (thus our new method independent of median's value).
+# Now try centering by both (a) removing linear trend if mode is not 0 or 100 (as such
+# variables seem unipolar, in which case we remove the mode) and (b) removing weekend 
+# effect (creating "_d2" variables).
+# - In a prior version of "_d2" variables, we removed linear trend if median was not 
+# 0 or 100, and removed weekend effect, but a variable could still be unipolar if its 
+# median is not exactly 0 or 100. Thus, in another prior version of "_d2" variables, 
+# we removed linear trend if most (i.e., >= 70%) of observations are not close (i.e., 
+# +/- 3 units from median; otherwise, remove median), and removed weekend effect, but
+# this still did not capture variables that seem unipolar (thus our current approach).
 
 vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
 
@@ -76,36 +81,43 @@ for (var in vars) {
     
     part_data <- subset(dat, lifepak_id == participant)
     
-    # Compute proportion of observations +/- 3 units from median     # TODO: Finalize thresholds
+    # Compute mode
     
-    mdn <- median(part_data[[var]], na.rm = TRUE)
+    mo <- Mode(part_data[[var]], na.rm = TRUE)
     
-    mdn_thres_ll <- mdn - 3
-    mdn_thres_ul <- mdn + 3
+    # Determine whether mode is singular and at a pole (i.e., 0 or 100)
     
-    prop_in_mdn_thres <-
-      sum(part_data[[var]] >= mdn_thres_ll & part_data[[var]] <= mdn_thres_ul, na.rm = TRUE) / 
-      sum(!is.na(part_data[[var]]))
+    single_mode_at_pole <- NA
+    
+    if (length(mo) == 1) {
+      if (is.na(mo)) {
+        single_mode_at_pole <- FALSE
+        
+        warning(paste0(participant, "'s mode for '", var, "' is NA"))
+      } else {
+        single_mode_at_pole <- mo %in% c(0, 100)
+        
+        if (single_mode_at_pole) {
+          print(paste0(participant, " has single mode at ", mo, " for '", var, "'"))
+        }
+      }
+    } else if (length(mo) > 1) {
+      single_mode_at_pole <- FALSE
+      
+      # Note: Several participants have multiple nodes
+      
+      # warning(paste0(participant, " has multiple modes for '", var, "'"))
+    }
     
     # Fit linear model
     
-    if (prop_in_mdn_thres >= .7) {                                   # TODO: Finalize thresholds
-      # Print median for relevant example participants and variables
+    if (single_mode_at_pole) {
+      # Remove mode and weekend effect
       
-      if (participant %in% c("272769", "861114", "326177")) {
-        cat("Mdn for example lifepak_id", participant, "variable", var, ":", mdn, "\n")
-      }
+      part_data$var_mo_rm <- NA
+      part_data$var_mo_rm <- part_data[[var]] - mo
       
-      # TODO: Print median for all relevant participants and variables
-      
-      # cat("Mdn for lifepak_id", participant, "variable", var, ":", mdn, "\n")
-      
-      # Remove median and weekend effect
-      
-      part_data$var_mdn_rm <- NA
-      part_data$var_mdn_rm <- part_data[[var]] - mdn
-      
-      fit <- lm(part_data$var_mdn_rm ~ part_data$response_wend, data = part_data)
+      fit <- lm(part_data$var_mo_rm ~ part_data$response_wend, data = part_data)
     } else {
       # Remove linear trend and weekend effect
       

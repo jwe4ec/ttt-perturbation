@@ -28,7 +28,7 @@ groundhog_day <- version_control()
 
 # Load packages and set seed
 
-pkgs <- c("qgraph", "randomcoloR", "tidyr", "ggplot2", "cowplot", "colorspace")
+pkgs <- c("qgraph", "randomcoloR", "tidyr", "ggplot2", "cowplot", "colorspace", "DescTools")
 groundhog.library(pkgs, groundhog_day)
 
 set.seed(1234)
@@ -1229,25 +1229,54 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     mtext(paste("Raw Uncentered Obs. Mdn:", raw_obs_col_median, old_detrend_label),
           side = 3, line = 0.5, adj = 0, cex = .5)
     
-    # TODO: Print percentage of observed values +/- 3 units from median
+    # TODO: Print mode of all raw observed values
     
-    mdn_thres_ll <- raw_obs_col_median - 3
-    mdn_thres_ul <- raw_obs_col_median + 3
+      # Compute mode
     
-    prop_in_mdn_thres <-
-      sum(obs_df[, raw_obs_col] >= mdn_thres_ll & obs_df[, raw_obs_col] <= mdn_thres_ul, na.rm = TRUE) / 
-      sum(!is.na(obs_df[, raw_obs_col]))
+    raw_obs_col_mo <- Mode(obs_df[, raw_obs_col], na.rm = TRUE)
     
-    perc_in_mdn_thres <- round(prop_in_mdn_thres * 100, 1)
+      # Determine whether mode is singular and at a pole (i.e., 0 or 100)
     
-    if (prop_in_mdn_thres >= .7) {
-      detrend_label <- "(Not Detrended)"
-    } else {
-      detrend_label <- NULL
+    single_mode_at_pole <- NA
+    
+    if (length(raw_obs_col_mo) == 1) {
+      if (is.na(raw_obs_col_mo)) {
+        single_mode_at_pole <- FALSE
+      } else {
+        single_mode_at_pole <- raw_obs_col_mo %in% c(0, 100)
+      }
+    } else if (length(raw_obs_col_mo) > 1) {
+      single_mode_at_pole <- FALSE
     }
+      
+      # Print mode
     
-    mtext(paste("% Raw Uncentered Obs. \u00B1 3 From Mdn:", perc_in_mdn_thres, detrend_label),
+    modes_label <- paste(raw_obs_col_mo, collapse = ", ")
+    
+    detrend_label <- if (single_mode_at_pole) "(Not Detrended)" else NULL
+    
+    mtext(paste("Raw Uncentered Obs. Mode(s):", modes_label, detrend_label),
           side = 3, line = 0, adj = 0, cex = .5)
+    
+    # TODO (Remove this if not used): Print percentage of observed values +/- 3 units from median
+    
+    # mdn_thres_ll <- raw_obs_col_median - 3
+    # mdn_thres_ul <- raw_obs_col_median + 3
+    # 
+    # prop_in_mdn_thres <-
+    #   sum(obs_df[, raw_obs_col] >= mdn_thres_ll & obs_df[, raw_obs_col] <= mdn_thres_ul, na.rm = TRUE) / 
+    #   sum(!is.na(obs_df[, raw_obs_col]))
+    # 
+    # perc_in_mdn_thres <- round(prop_in_mdn_thres * 100, 1)
+    # 
+    # if (prop_in_mdn_thres >= .7) {
+    #   detrend_label <- "(Not Detrended)"
+    # } else {
+    #   detrend_label <- NULL
+    # }
+    # 
+    # mtext(paste("% Raw Uncentered Obs. \u00B1 3 From Mdn:", perc_in_mdn_thres, detrend_label),
+    #       side = 3, line = 0, adj = 0, cex = .5)
   }
   
   par(mfrow = c(1, 1))

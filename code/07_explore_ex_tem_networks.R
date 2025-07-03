@@ -1227,7 +1227,7 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     }
     
     mtext(paste("Raw Uncentered Obs. Mdn:", raw_obs_col_median, old_detrend_label),
-          side = 3, line = 0.5, adj = 0, cex = .5)
+          side = 3, line = 1, adj = 0, cex = .5)
     
     # TODO: Print mode of all raw observed values
     
@@ -1235,27 +1235,37 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
     
     raw_obs_col_mo <- Mode(obs_df[, raw_obs_col], na.rm = TRUE)
     
-      # Determine whether mode is singular and at a pole (i.e., 0 or 100)
+      # If mode is singular and at a pole (i.e., 0 or 100), compute proportion of
+      # data at mode and determine whether that proportion is nontrivial (>= 25%)
     
-    single_mode_at_pole <- NA
+    prop_at_single_mode_at_pole <- NA
+    single_nontriv_mode_at_pole <- NA
     
     if (length(raw_obs_col_mo) == 1) {
       if (is.na(raw_obs_col_mo)) {
-        single_mode_at_pole <- FALSE
+        single_nontriv_mode_at_pole <- FALSE
+      } else if (raw_obs_col_mo %in% c(0, 100)) {
+        prop_at_single_mode_at_pole <- sum(obs_df[, raw_obs_col] == raw_obs_col_mo, na.rm = TRUE) / 
+                                         sum(!is.na(obs_df[, raw_obs_col]))
+        
+        single_nontriv_mode_at_pole <- prop_at_single_mode_at_pole >= .25
       } else {
-        single_mode_at_pole <- raw_obs_col_mo %in% c(0, 100)
+        single_nontriv_mode_at_pole <- FALSE
       }
     } else if (length(raw_obs_col_mo) > 1) {
-      single_mode_at_pole <- FALSE
+      single_nontriv_mode_at_pole <- FALSE
     }
       
-      # Print mode
+      # Print mode(s) and, if singular and at pole, print percentage of data at mode
     
     modes_label <- paste(raw_obs_col_mo, collapse = ", ")
+    detrend_label <- if (single_nontriv_mode_at_pole) "(Not Detrended)" else NULL
     
-    detrend_label <- if (single_mode_at_pole) "(Not Detrended)" else NULL
+    mtext(paste("Raw Uncentered Obs. Mode(s):", modes_label),
+          side = 3, line = 0.5, adj = 0, cex = .5)
     
-    mtext(paste("Raw Uncentered Obs. Mode(s):", modes_label, detrend_label),
+    mtext(paste("% Raw Uncentered Obs. at Single Polar Mode:",
+                round(prop_at_single_mode_at_pole * 100, 1), detrend_label),
           side = 3, line = 0, adj = 0, cex = .5)
     
     # TODO (Remove this if not used): Print percentage of observed values +/- 3 units from median

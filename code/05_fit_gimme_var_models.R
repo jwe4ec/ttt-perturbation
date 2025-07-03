@@ -130,19 +130,14 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 # centered by removing linear trend. Fit idiographic VAR models using "gimme" based 
 # on "_d2" variables that were centered by removing linear trend and weekend effect.
 
-  # TODO: Resolve warnings
-    # When standardize = FALSE, 50 or more warning messages (first 50 like this):
-      # In lav_mvnorm_missing_h1_estimate_moments(Y = X[[g]],  ... : lavaan WARNING:
-      # Maximum number of iterations reached when computing the sample
-      # moments using EM; use the em.h1.iter.max= argument to increase the
-      # number of iterations
-    # When standardize = TRUE, 13 warnings like that above
+  # No warnings (regardless of whether "standardize" is FALSE or TRUE)
   
 var_res_ls     <- indSEM(dat_mat_ls, "./results/gimme/raw/",
                          ar = TRUE, VAR = TRUE)
 
 var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/raw_std/",
                          ar = TRUE, VAR = TRUE, standardize = TRUE)
+
 
 
 

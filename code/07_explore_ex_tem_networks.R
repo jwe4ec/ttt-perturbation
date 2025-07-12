@@ -1637,14 +1637,18 @@ lapply(names(diff_over_obs_sd_study_4_gimme),     function(lifepak_id) {
 # Create plots to explore weekend effect ----
 # ---------------------------------------------------------------------------- #
 
-# Compute 20 predicted values for saturated Mplus networks (about 2 days) starting 
-# from participant's centered values at each time point
+# Compute 20 predicted values for saturated Mplus networks and for GIMME networks
+# (about 2 days) starting from participant's centered values at each time point
 
 pred_study_20_satur <- lapply(names(satur_adj_mats_var), function(lifepak_id) {
   compute_k_pred(dat_ls[[lifepak_id]], satur_adj_mats_var[[lifepak_id]], 20, n_study_timepoints[[lifepak_id]], "_d_scl")
 })
+pred_study_20_gimme <- lapply(names(gimme_adj_mats_var), function(lifepak_id) {
+  compute_k_pred(dat_ls[[lifepak_id]], gimme_adj_mats_var[[lifepak_id]], 20, n_study_timepoints[[lifepak_id]], "_d2_scl")
+})
 
 names(pred_study_20_satur) <- names(satur_adj_mats_var)
+names(pred_study_20_gimme) <- names(gimme_adj_mats_var)
 
 # Define function to prepare data for plots to explore weekend effect
 
@@ -1680,19 +1684,29 @@ prep_dat_wend_plots <- function(part_data, pred, obs_var_suf, wday1, wday2) {
 
 # Run function
 
-wend_plot_dfs_fri_mon <- lapply(names(dat_ls), function(lifepak_id) {
+  # For saturated Mplus networks
+
+wend_plot_dfs_satur_fri_mon <- lapply(names(dat_ls), function(lifepak_id) {
   prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_satur[[lifepak_id]], "_d_scl", "Friday", "Monday")
 })
-wend_plot_dfs_fri_sun <- lapply(names(dat_ls), function(lifepak_id) {
+wend_plot_dfs_satur_fri_sun <- lapply(names(dat_ls), function(lifepak_id) {
   prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_satur[[lifepak_id]], "_d_scl", "Friday", "Sunday")
 })
-wend_plot_dfs_fri_sat <- lapply(names(dat_ls), function(lifepak_id) {
+wend_plot_dfs_satur_fri_sat <- lapply(names(dat_ls), function(lifepak_id) {
   prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_satur[[lifepak_id]], "_d_scl", "Friday", "Saturday")
 })
 
-names(wend_plot_dfs_fri_mon) <- names(dat_ls)
-names(wend_plot_dfs_fri_sun) <- names(dat_ls)
-names(wend_plot_dfs_fri_sat) <- names(dat_ls)
+names(wend_plot_dfs_satur_fri_mon) <- names(dat_ls)
+names(wend_plot_dfs_satur_fri_sun) <- names(dat_ls)
+names(wend_plot_dfs_satur_fri_sat) <- names(dat_ls)
+
+  # For GIMME networks
+
+wend_plot_dfs_gimme_fri_mon <- lapply(names(dat_ls), function(lifepak_id) {
+  prep_dat_wend_plots(dat_ls[[lifepak_id]], pred_study_20_gimme[[lifepak_id]], "_d2_scl", "Friday", "Monday")
+})
+
+names(wend_plot_dfs_gimme_fri_mon) <- names(dat_ls)
 
 # Define function to create plots to explore weekend effect
 # - Starting from one time point or (for "k" predicted values) starting from many 
@@ -1843,8 +1857,8 @@ dir.create("./results/pred_values/wend_effect/")
 
     # For 20 predicted values starting from each time point on a Friday or Monday
 
-lapply(names(wend_plot_dfs_fri_mon), function(lifepak_id) {
-  create_wend_plot(wend_plot_dfs_fri_mon[[lifepak_id]], "_d_scl", "many", "Friday", "Monday",
+lapply(names(wend_plot_dfs_satur_fri_mon), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_satur_fri_mon[[lifepak_id]], "_d_scl", "many", "Friday", "Monday",
                    paste0("wend_pred_study_20_satur_fri_mon_iter_colors_", lifepak_id),
                    paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Mon. (ID ", lifepak_id, ")"),
                    iter_colors_by_wday = TRUE)
@@ -1852,8 +1866,8 @@ lapply(names(wend_plot_dfs_fri_mon), function(lifepak_id) {
 
   # TODO (keep these?): For 20 predicted values starting from each time point on a Friday or Sunday
 
-lapply(names(wend_plot_dfs_fri_sun), function(lifepak_id) {
-  create_wend_plot(wend_plot_dfs_fri_sun[[lifepak_id]], "_d_scl", "many", "Friday", "Sunday",
+lapply(names(wend_plot_dfs_satur_fri_sun), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_satur_fri_sun[[lifepak_id]], "_d_scl", "many", "Friday", "Sunday",
                    paste0("wend_pred_study_20_satur_fri_sun_iter_colors_", lifepak_id),
                    paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sun. (ID ", lifepak_id, ")"),
                    iter_colors_by_wday = TRUE)
@@ -1861,8 +1875,8 @@ lapply(names(wend_plot_dfs_fri_sun), function(lifepak_id) {
 
   # TODO (keep these?): For 20 predicted values starting from each time point on a Friday or Saturday
 
-lapply(names(wend_plot_dfs_fri_sat), function(lifepak_id) {
-  create_wend_plot(wend_plot_dfs_fri_sat[[lifepak_id]], "_d_scl", "many", "Friday", "Saturday",
+lapply(names(wend_plot_dfs_satur_fri_sat), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_satur_fri_sat[[lifepak_id]], "_d_scl", "many", "Friday", "Saturday",
                    paste0("wend_pred_study_20_satur_fri_sat_iter_colors_", lifepak_id),
                    paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sat. (ID ", lifepak_id, ")"),
                    iter_colors_by_wday = TRUE)
@@ -1871,6 +1885,17 @@ lapply(names(wend_plot_dfs_fri_sat), function(lifepak_id) {
 
 
 
+
+  # For GIMME networks
+
+    # For 20 predicted values starting from each time point on a Friday or Monday
+
+lapply(names(wend_plot_dfs_gimme_fri_mon), function(lifepak_id) {
+  create_wend_plot(wend_plot_dfs_gimme_fri_mon[[lifepak_id]], "_d2_scl", "many", "Friday", "Monday",
+                   paste0("wend_pred_study_20_gimme_fri_mon_iter_colors_", lifepak_id),
+                   paste0("Next 20 Through Study for GIMME Starting From Each Obs. Value on Fri. or Mon. (ID ", lifepak_id, ")"),
+                   iter_colors_by_wday = TRUE)
+})
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

@@ -44,3 +44,14 @@ version_control <- function() {
   
   return(groundhog_day)
 }
+
+# ---------------------------------------------------------------------------- #
+# Define code_satur_gimme_model_paths() ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Define function to create GIMME paths for saturated model from data matrix
+
+
+
+
+

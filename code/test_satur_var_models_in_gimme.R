@@ -1,52 +1,28 @@
 # ---------------------------------------------------------------------------- #
-# Define Functions
+# Test Saturated Idiographic VAR Models in GIMME ----
 # Author: Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-# Define version_control() ----
+# Setup ----
 # ---------------------------------------------------------------------------- #
 
-# Define function to check R version, load groundhog package, and return groundhog_day
+# Load package and set seed
 
-version_control <- function() {
-  # Ensure you are using the same version of R used at the time the script was 
-  # written. To install a previous version, go to 
-  # https://cran.r-project.org/bin/windows/base/old/
-  
-  script_R_version <- "R version 4.3.2 (2023-10-31 ucrt)"
-  current_R_version <- R.Version()$version.string
-  
-  if(current_R_version != script_R_version) {
-    warning(paste0("This script is based on ", script_R_version,
-                   ". You are running ", current_R_version, "."))
-  }
-  
-  # Load packages using "groundhog", which installs and loads the most recent
-  # versions of packages available on the specified date ("groundhog_day"). This 
-  # is important for reproducibility so that everyone running the script is using
-  # the same versions of packages used at the time the script was written.
-  
-  # Note that packages may take longer to load the first time you load them with
-  # "groundhog.library". This is because you may not have the correct versions of 
-  # the packages installed based on the "groundhog_day". After "groundhog.library"
-  # automatically installs the correct versions alongside other versions you may 
-  # have installed, it will load the packages more quickly.
-  
-  # If in the process of loading packages with "groundhog.library" for the first 
-  # time the console states that you first need to install "Rtools", follow steps 
-  # here (https://cran.r-project.org/bin/windows/Rtools/) for installing "Rtools" 
-  # and putting "Rtools" on the PATH. Then try loading the packages again.
-  
-  library(groundhog)
-  meta.groundhog("2024-02-15")
-  groundhog_day <- "2024-02-15"
-  
-  return(groundhog_day)
-}
+library(gimme)
+
+set.seed(1234)
+
+# Load example data for 5 individuals, each with 50 observations on 3 variables
+
+dat_ls <- ts
+
+# Convert data frames to matrices
+
+dat_mat_ls <- lapply(dat_ls, as.matrix)
 
 # ---------------------------------------------------------------------------- #
-# Define code_satur_gimme_model_paths() ----
+# Define code_satur_gimme_model_paths() helper function ----
 # ---------------------------------------------------------------------------- #
 
 # Define function to create GIMME paths for saturated model where "ar = TRUE"
@@ -66,7 +42,7 @@ create_satur_gimme_paths <- function(dat_mat) {
                                   dimnames = list(vars_lagged,  vars_lagged))
   lagged_to_current_mat <- matrix(1, n_vars, n_vars,
                                   dimnames = list(vars_current, vars_lagged))
-
+  
   # Specify variances for current variables (diagonal)
   
   variances_current <- paste0(vars_current, "~~", vars_current)
@@ -142,7 +118,7 @@ create_satur_gimme_paths <- function(dat_mat) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Define create_lagged_vars_for_satur_gimme_model() ----
+# Define create_lagged_vars_for_satur_gimme_model() helper function ----
 # ---------------------------------------------------------------------------- #
 
 # Define function to create lagged variables (append "lag" to current variables) using GIMME method in "setupTransformData.R"
@@ -158,3 +134,38 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
     ts_lc
   })
 }
+
+# ---------------------------------------------------------------------------- #
+# Fit saturated GIMME idiographic VAR models ----
+# ---------------------------------------------------------------------------- #
+
+# Create paths for saturated model from example participant's data matrix using function above
+
+satur_gimme_paths <- create_satur_gimme_paths(dat_mat_ls[[1]])
+
+# Create lagged variables per GIMME method using function above
+
+dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
+
+# Fit saturated idiographic VAR models (as when "ar = TRUE" and "VAR = TRUE")
+
+satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/test/raw/",
+                           paths = satur_gimme_paths$all$paths)
+
+# TODO: Resolve errors like this for each individual:
+
+  # individual-level search, subject 1 (ts1)
+  # Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
+  #   lavaan ERROR: duplicate model element in: V1~~V1
+  # Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
+  #   lavaan ERROR: duplicate model element in: V1~~V1
+  # Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
+  #   lavaan ERROR: duplicate model element in: V1~~V1
+
+# TODO: Resolve other errors and warnings:
+
+  # Error in coefs[!coefs$param %in% dat$nonsense_paths, ] : 
+  #   incorrect number of dimensions
+  # In addition: Warning message:
+  #   In coefs$id <- rep(names(store$coefs), sapply(store$coefs, nrow)) :
+  #   Coercing LHS to a list

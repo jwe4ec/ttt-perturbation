@@ -132,10 +132,10 @@ dat_mat_ls <- lapply(dat_ls, function(x) {
 
   # No warnings (regardless of whether "standardize" is FALSE or TRUE)
   
-var_res_ls     <- indSEM(dat_mat_ls, "./results/gimme/raw/",
+var_res_ls     <- indSEM(dat_mat_ls, "./results/gimme/ind_sem/raw/",
                          ar = TRUE, VAR = TRUE)
 
-var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/raw_std/",
+var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/ind_sem/raw_std/",
                          ar = TRUE, VAR = TRUE, standardize = TRUE)
 
 
@@ -150,6 +150,27 @@ var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/raw_std/",
 
 
 # TODO: Confirm whether "beta.std" and "se" is completely standardized solution
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Fit saturated GIMME idiographic VAR models ----
+# ---------------------------------------------------------------------------- #
+
+# Create paths for saturated model from example participant's data matrix
+
+satur_gimme_paths <- create_satur_gimme_paths(dat_mat_ls[[1]])
+
+# Create lagged variables using GIMME method
+
+dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
+
+# TODO (resolve errors and warnings): Fit saturated idiographic VAR models
+
+satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/ind_sem_satur/raw/",
+                           paths = satur_gimme_paths$all$paths)
 
 
 

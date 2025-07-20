@@ -158,3 +158,24 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
     ts_lc
   })
 }
+
+# ---------------------------------------------------------------------------- #
+# Define create_var_labels() ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to create variable labels
+
+create_var_labels <- function(vars) {
+  var_labels <- vars
+  
+  var_labels[var_labels == "bad"]      <- "Bad Self"
+  var_labels[var_labels == "control"]  <- "Lack Control"
+  var_labels[var_labels == "energy"]   <- "Fatigue"
+  var_labels[var_labels == "focus"]    <- "Lack Focus"
+  var_labels[var_labels == "fun"]      <- "Inaction"
+  var_labels[var_labels == "interest"] <- "Lack Interest"
+  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
+  var_labels[var_labels == "sad"]      <- "Sad"
+  
+  return(var_labels)
+}

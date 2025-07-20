@@ -55,8 +55,8 @@ load("./results/from_ttt-p1-main-analysis/extracted/results_var.RDS")
 
   # All results from GIMME using "_d2" variables
 
-gimme_var_res_ls     <- readRDS("./results/gimme/raw/var_res_ls.RDS")
-gimme_var_res_ls_std <- readRDS("./results/gimme/raw_std/var_res_ls_std.RDS") # TODO: Likely remove this
+gimme_var_res_ls     <- readRDS("./results/gimme/ind_sem/raw/var_res_ls.RDS")
+gimme_var_res_ls_std <- readRDS("./results/gimme/ind_sem/raw_std/var_res_ls_std.RDS") # TODO: Likely remove this
 
 
 
@@ -1105,17 +1105,7 @@ plot_pred_obs <- function(pred_df1, obs_df, obs_var_suf, pred_start_t_points, pr
   }
   
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
-  
-  var_labels <- vars
-  
-  var_labels[var_labels == "bad"]      <- "Bad Self"
-  var_labels[var_labels == "control"]  <- "Lack Control"
-  var_labels[var_labels == "energy"]   <- "Fatigue"
-  var_labels[var_labels == "focus"]    <- "Lack Focus"
-  var_labels[var_labels == "fun"]      <- "Inaction"
-  var_labels[var_labels == "interest"] <- "Lack Interest"
-  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
-  var_labels[var_labels == "sad"]      <- "Sad"
+  var_labels <- create_var_labels(vars)
   
   pred_cols    <- paste0(vars, "_pred")
   obs_cols     <- paste0(vars, obs_var_suf)
@@ -1476,18 +1466,8 @@ plot_pred_error <- function(pred_error, plot_name, plot_title) {
   col  <- "red"
   pch  <- 16
   
-  vars       <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
-  
-  var_labels <- vars
-  
-  var_labels[var_labels == "bad"]      <- "Bad Self"
-  var_labels[var_labels == "control"]  <- "Lack Control"
-  var_labels[var_labels == "energy"]   <- "Fatigue"
-  var_labels[var_labels == "focus"]    <- "Lack Focus"
-  var_labels[var_labels == "fun"]      <- "Inaction"
-  var_labels[var_labels == "interest"] <- "Lack Interest"
-  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
-  var_labels[var_labels == "sad"]      <- "Sad"
+  vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
+  var_labels <- create_var_labels(vars)
   
     # Check that y-axis spans range of prediction error values
   
@@ -1569,17 +1549,7 @@ plot_diff_over_obs_sd <- function(diff_over_obs_sd, plot_name, plot_title) {
   ylim <- c(-2, 2)
 
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
-  
-  var_labels <- vars
-  
-  var_labels[var_labels == "bad"]      <- "Bad Self"
-  var_labels[var_labels == "control"]  <- "Lack Control"
-  var_labels[var_labels == "energy"]   <- "Fatigue"
-  var_labels[var_labels == "focus"]    <- "Lack Focus"
-  var_labels[var_labels == "fun"]      <- "Inaction"
-  var_labels[var_labels == "interest"] <- "Lack Interest"
-  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
-  var_labels[var_labels == "sad"]      <- "Sad"
+  var_labels <- create_var_labels(vars)
   
   pdf(paste0("./results/diff_over_obs_sd/", plot_name, ".pdf"))
   
@@ -1755,17 +1725,7 @@ create_wend_plot <- function(wend_plot_df, obs_var_suf, pred_start_t_points, wda
   }
   
   vars <- c("bad", "control", "energy", "focus", "fun", "interest", "movement", "sad")
-  
-  var_labels <- vars
-  
-  var_labels[var_labels == "bad"]      <- "Bad Self"
-  var_labels[var_labels == "control"]  <- "Lack Control"
-  var_labels[var_labels == "energy"]   <- "Fatigue"
-  var_labels[var_labels == "focus"]    <- "Lack Focus"
-  var_labels[var_labels == "fun"]      <- "Inaction"
-  var_labels[var_labels == "interest"] <- "Lack Interest"
-  var_labels[var_labels == "movement"] <- "Slower or Fidgety"
-  var_labels[var_labels == "sad"]      <- "Sad"
+  var_labels <- create_var_labels(vars)
   
   pred_cols    <- paste0(vars, "_pred")
   obs_cols     <- paste0(vars, obs_var_suf)
@@ -1834,10 +1794,6 @@ create_wend_plot <- function(wend_plot_df, obs_var_suf, pred_start_t_points, wda
       }
     }
     
-    # TODO (consider removing): Plot observed values as points
-    
-    # points(df$t_from_start, df[, obs_col])
-    
     # TODO (maybe put in plot): Add legend
     
     mtext(paste(wday1, "Starts: Teal;", wday2, "Starts: Peach"),
@@ -1863,28 +1819,6 @@ lapply(names(wend_plot_dfs_satur_fri_mon), function(lifepak_id) {
                    paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Mon. (ID ", lifepak_id, ")"),
                    iter_colors_by_wday = TRUE)
 })
-
-  # TODO (keep these?): For 20 predicted values starting from each time point on a Friday or Sunday
-
-lapply(names(wend_plot_dfs_satur_fri_sun), function(lifepak_id) {
-  create_wend_plot(wend_plot_dfs_satur_fri_sun[[lifepak_id]], "_d_scl", "many", "Friday", "Sunday",
-                   paste0("wend_pred_study_20_satur_fri_sun_iter_colors_", lifepak_id),
-                   paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sun. (ID ", lifepak_id, ")"),
-                   iter_colors_by_wday = TRUE)
-})
-
-  # TODO (keep these?): For 20 predicted values starting from each time point on a Friday or Saturday
-
-lapply(names(wend_plot_dfs_satur_fri_sat), function(lifepak_id) {
-  create_wend_plot(wend_plot_dfs_satur_fri_sat[[lifepak_id]], "_d_scl", "many", "Friday", "Saturday",
-                   paste0("wend_pred_study_20_satur_fri_sat_iter_colors_", lifepak_id),
-                   paste0("Next 20 Through Study for Satur. Starting From Each Obs. Value on Fri. or Sat. (ID ", lifepak_id, ")"),
-                   iter_colors_by_wday = TRUE)
-})
-
-
-
-
 
   # For GIMME networks
 

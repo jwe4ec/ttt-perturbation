@@ -1678,7 +1678,7 @@ wend_plot_dfs_gimme_fri_mon <- lapply(names(dat_ls), function(lifepak_id) {
 
 names(wend_plot_dfs_gimme_fri_mon) <- names(dat_ls)
 
-# Define function to create plots to explore weekend effect
+# Define function to create plots to explore weekend effect for given model
 # - Starting from one time point or (for "k" predicted values) starting from many 
 #   (pred_start_t_points = "one" or "many")
 # - Optional: For "k" predicted values starting from many time points, use a different 
@@ -1830,6 +1830,148 @@ lapply(names(wend_plot_dfs_gimme_fri_mon), function(lifepak_id) {
                    paste0("Next 20 Through Study for GIMME Starting From Each Obs. Value on Fri. or Mon. (ID ", lifepak_id, ")"),
                    iter_colors_by_wday = TRUE)
 })
+
+# Define function to create plots to explore weekend effect, comparing models for 
+# given node variable, where "wend_plot_df1" is for model before removing weekend
+# effect and "wend_plot_df2" is for model after removing weekend effect
+# - Starting from one time point or (for "k" predicted values) starting from many 
+#   (pred_start_t_points = "one" or "many")
+# - Optional: For "k" predicted values starting from many time points, use a different 
+#   color for each iteration ("iter_colors = TRUE")
+
+create_wend_plot_two_mods <- function(wend_plot_df1, wend_plot_df2,
+                                      node_var, pred_start_t_points, wday1, wday2, ylim_ll = -10, ylim_ul = 10,
+                                      plot_name, plot_title, iter_colors_by_wday = NULL) {
+  df1 <- wend_plot_df1
+  df2 <- wend_plot_df2
+  
+  df1$t_from_start <- NA
+  df2$t_from_start <- NA
+  
+  df1$t_from_start <- df1$iter_t - 1
+  df2$t_from_start <- df2$iter_t - 1
+  
+  dfs        <- list(df1, df2)
+  mod_labels <- c("Before", "After")
+  
+  # Define plot settings
+  
+  t_from_start_values <- unique(df1$t_from_start)
+  
+  xlab <- "Time Points From Starting Time Point"
+  ylab <- expression(paste("Centered Value / ", italic("SD")))
+  xlim_ll <- 0
+  xlim_ul <- max(t_from_start_values)
+  ylim_ll <- ylim_ll
+  ylim_ul <- ylim_ul
+  lwd <- 1.5
+  pch <- 16
+  
+  if (pred_start_t_points == "one") {
+    color_pred_wday1 <- "#3B809A"
+    color_pred_wday2 <- "#F17B51"
+  } else if (pred_start_t_points == "many") {
+    n_iterations_wday1 <- length(unique(df1$iter[df1$iter_start_wday == wday1]))
+    n_iterations_wday2 <- length(unique(df1$iter[df1$iter_start_wday == wday2]))
+    
+    if (is.null(iter_colors_by_wday)) {
+      color_pred_wday1 <- rep("#3B809A", n_iterations_wday1)
+      color_pred_wday2 <- rep("#F17B51", n_iterations_wday2)
+    } else if (iter_colors_by_wday == TRUE) {
+      set.seed(1234)
+      color_pred_wday1 <- sequential_hcl(n_iterations_wday1, palette = "Teal")
+      color_pred_wday2 <- sequential_hcl(n_iterations_wday2, palette = "Peach")
+    }
+    
+    color_pred_wday1 <- adjust_transparency(color_pred_wday1, .5)
+    color_pred_wday2 <- adjust_transparency(color_pred_wday2, .5)
+  }
+  
+  var_label <- create_var_labels(node_var)
+  
+  pred_col <- paste0(node_var, "_pred")
+
+  # Check that y-axis spans range of predicted values
+  
+  pred_col_min <- min(c(df1[, pred_col], df2[, pred_col]), na.rm = TRUE)
+  pred_col_max <- max(c(df1[, pred_col], df2[, pred_col]), na.rm = TRUE)
+  
+  if (pred_col_min < ylim_ll) {
+    stop(paste0("Make lower limit of 'ylim' <= ", pred_col_min))
+  }
+  if (pred_col_max > ylim_ul) {
+    stop(paste0("Make upper limit of 'ylim' >= ", pred_col_max))
+  }
+  
+  # Create plots
+  
+  pdf(paste0("./results/pred_values/wend_effect/compare_mods/", plot_name, ".pdf"))
+  
+  par(mfrow = c(1, 2))
+  
+  for (i in 1:length(dfs)) {
+    df        <- dfs[[i]]
+    mod_label <- mod_labels[i]
+
+    # Start with empty plot
+    
+    plot(df$t_from_start, df[, pred_col], main = mod_label, type = "n", 
+         xlab = xlab, ylab = ylab, xlim = c(xlim_ll, xlim_ul), ylim = c(ylim_ll, ylim_ul))
+    
+    mtext(plot_title, side = 3, line = -1, outer = TRUE)
+    
+    # Create separate data frame for each weekday
+    
+    df_wday1 <- df[df$iter_start_wday == wday1, ]
+    df_wday2 <- df[df$iter_start_wday == wday2, ]
+    
+    # Plot predicted values
+    
+    if (pred_start_t_points == "one") {
+      lines(df_wday1$t_from_start, df_wday1[, pred_col], lwd = lwd, col = color_pred_wday1)
+      lines(df_wday2$t_from_start, df_wday2[, pred_col], lwd = lwd, col = color_pred_wday2)
+    } else if (pred_start_t_points == "many") {
+      iters_wday1 <- unique(df_wday1$iter)
+      iters_wday2 <- unique(df_wday2$iter)
+      
+      for (j in 1:n_iterations_wday1) {
+        iter_pred  <- df_wday1[df_wday1$iter == iters_wday1[j], ]
+        iter_color <- color_pred_wday1[j]
+        
+        lines(iter_pred$t_from_start, iter_pred[, pred_col], lwd = lwd, col = iter_color)
+      }
+      for (j in 1:n_iterations_wday2) {
+        iter_pred  <- df_wday2[df_wday2$iter == iters_wday2[j], ]
+        iter_color <- color_pred_wday2[j]
+        
+        lines(iter_pred$t_from_start, iter_pred[, pred_col], lwd = lwd, col = iter_color)
+      }
+    }
+    
+    # TODO (maybe put in plot): Add legend
+    
+    mtext(paste(wday1, "Starts: Teal;", wday2, "Starts: Peach"),
+          side = 3, line = 0, adj = 0, cex = .5)
+  }
+  
+  par(mfrow = c(1, 1))
+  
+  dev.off()
+}
+
+# Run function
+
+dir.create("./results/pred_values/wend_effect/compare_mods/")
+
+  # For saturated Mplus and GIMME networks for ID 326177
+
+    # For 20 predicted values starting from each time point on a Friday or Monday
+
+create_wend_plot_two_mods(wend_plot_dfs_satur_fri_mon$"326177", wend_plot_dfs_gimme_fri_mon$"326177",
+    "focus", "many", "Friday", "Monday", -2, 2,
+    paste0("wend_pred_study_20_satur_gimme_focus_fri_mon_iter_colors_", "326177"),
+    paste0("Next 20 For Lack Focus From Fri./Mon. Obs., Before/After Removing Wend Effect (ID ", "326177", ")"),
+    iter_colors_by_wday = TRUE)
 
 # ---------------------------------------------------------------------------- #
 # TODO: Experiment with GLLA ----

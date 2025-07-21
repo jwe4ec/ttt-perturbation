@@ -386,8 +386,23 @@ test$response_end_time <- format(test$response_end_datetime, "%H:%M:%S")
 
 max(test$notification_time, na.rm = TRUE) == "22:58:56"
 min(test$response_end_time, na.rm = TRUE) == "07:32:26"
+max(test$response_end_time, na.rm = TRUE) == "23:48:32"
 
-  # TODO: May need to analyze this in data prior to making it evenly spaced in time
+  # TODO: Test creation of day number variable, where 1 day is 9.6 units of "bin_no_adj".
+  # Close, but not quite (e.g., some day numbers contain multiple days). Look into data
+  # prior to aligning in time to determine why some days have only 4 notifications and
+  # consider analyzing this in data prior to aligning in time.
+
+day_breaks <- round(9.6*0:21, 0)
+
+test$day_bin_range <- cut(test$bin_no_adj, day_breaks, ordered_result = TRUE)
+test$day_bin_no    <- as.integer(test$day_bin_range)
+# View(test[c("lifepak_id", "bin_no_adj", "response_wday", "notification_time", 
+#             "response_end_time", "day_bin_no", "day_bin_range")])
+
+test_ag <- aggregate(response_wday ~ lifepak_id + day_bin_no, data = test, 
+                     FUN = function(x) length(unique(x)))
+test_ag <- test_ag[order(test_ag$lifepak_id, test_ag$day_bin_no), ]
 
 
 

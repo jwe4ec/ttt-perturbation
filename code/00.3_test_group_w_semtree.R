@@ -128,21 +128,80 @@ growthCurveModel <- mxModel("Linear Growth Curve Model Path Specification",
 growthCurveModel <- mxRun(growthCurveModel)
 
 # ---------------------------------------------------------------------------- #
-# Run a tree ----
+# Run a tree using default "naive" selection method ----
 # ---------------------------------------------------------------------------- #
 
 # Grow a SEM tree using the semtree function, which takes the model and the dataset as input. 
-# If not specified otherwise, SEM tree will assume that all variables in the dataset, which 
-# are not observed variables in the dataset are potential predictors.
+# If not specified otherwise, SEM tree will assume that all variables in the dataset which 
+# are not observed variables are potential predictors.
 
-tree <- semtree(model = growthCurveModel, 
-                data = growth.data)
+# Per R documentation, this creates a tree that recursively partitions a dataset such that the 
+# partitions maximally differ with respect to the model-predicted distributions. Each resulting 
+# subgroup (represented as a leaf in the tree) is represented by a SEM with a distinct set of 
+# parameter estimates. Predictors can be of any data type.
 
-# Plot tree
+# Use default "naive" selection method, which compares all possible split values to one 
+# another over all predictors included in the dataset (see "semtree.control()" defaults)
 
-plot(tree)
+tree_naive <- semtree(model = growthCurveModel, data = growth.data,
+                      predictors = NULL) # TODO: By default, all variables that are in dataset and
+                                         # not part of model are potential predictors (doesn't this
+                                         # contradict what the tutorial says above?)
 
-# TODO: Think more deeply and further evaluate results
+# Examine tree
+
+summary(tree_naive)
+plot(tree_naive)
+tree_naive$control
+tree_naive # Has many other elements
+
+# TODO: What is it using as predictors? It seems to have split on "P1", but that was observed
+
+# ---------------------------------------------------------------------------- #
+# Run a tree using "score" selection method ----
+# ---------------------------------------------------------------------------- #
+
+# Tutorial: https://brandmaier.github.io/semtree/articles/score-based-tests.html
+
+# Score-based tests for variable and split-point selection are preferable because 
+# they are fast to compute, perform unbiased variable selection, and have better 
+# statistical power than some other selection algorithms proposed earlier
+
+# Use "score" selection method and Bonferroni-correction to adjust for multiple 
+# testing of predictors
+
+ctrl <- semtree.control(method = "score", bonferroni = TRUE)
+
+tree_score <- semtree(model = growthCurveModel, data = growth.data, 
+                      control = ctrl)
+
+# Examine tree
+
+summary(tree_score)
+plot(tree_score) # Yielded the same tree, but with different "LR" and "df" values
+tree_score$control
+tree_score # Has many other elements
+
+# TODO: Where is the significance test for the difference between the subgroups?
+
+
+
+
+# TODO: For plot of implied mixture model from another simulated data example, see
+# https://brandmaier.github.io/semtree/articles/score-based-tests.html
+
+
+
+
+# TODO: Find and read paper on method to understand further
+# - See papers at https://brandmaier.github.io/semtree/index.html
+
+
+
+
+# TODO: Seems like we'd fit the networks in OpenMx though (not use raw data), using 
+# OpenMx or lavaan syntax. Might be useful if we need to group participants based on 
+# their saturated models (vs. constrained models in S-GIMME)
 
 
 

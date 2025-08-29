@@ -55,10 +55,11 @@ tic()
 
 pdf(paste0(perturbR_path, "perturbR_plots.pdf"))
 perturbRout <- perturbR(sym.matrix = gimme_output$sim_matrix,
-                        plot       = TRUE,            
-                        resolution = 0.01,      
-                        reps       = 100,             
-                        errbars    = TRUE)
+                        plot       = TRUE,
+                        resolution = 0.01,
+                        reps       = 100,
+                        errbars    = TRUE) # Show +/- 1 SE from mean values across 
+                                           # repetitions at given resolution (alpha)
 dev.off()
 
 toc()

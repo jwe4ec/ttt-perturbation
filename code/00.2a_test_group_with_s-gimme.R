@@ -37,6 +37,7 @@ set.seed(1234)
 # ---------------------------------------------------------------------------- #
 
 # Tutorial: https://tarheels.live/gimme/subgrouping-gimme/
+# Paper: Gates et al. (2017; https://doi.org/10.1080/00273171.2016.1256187 )
 
 # Call the data from the "gimme" package into the environment
 
@@ -52,9 +53,16 @@ gimme_output <- gimme(data        = simData,
                       out         = s_gimme_path,
                       subgroup    = TRUE,
                       sub_feature = "lag & contemp", # TODO: Consider grouping on only lagged relations
-                      sub_method  = "Walktrap", 
+                      sub_method  = "Walktrap",
                       groupcutoff = .75,
-                      subcutoff   = .51)
+                      subcutoff   = .51) # TODO: Per R documentation, defaults to .75 (vs. .51 per tutorial)
+
+# Notes on plots (dashed = temporal paths, solid = contemporaneous paths)
+# - Black = group-level paths
+# - Green = subgroup-level paths
+# - Grey = individual-level paths
+# - TODO: Seems that positive vs. negative paths are not distinguished
+# - TODO: What are the red vs. black paths in "summaryPathsPlot.pdf"?
 
 # Save results
 

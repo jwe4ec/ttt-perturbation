@@ -190,6 +190,12 @@ summary(tree_score)
 plot(tree_score)
 tree_score$control
 
+# TODO: LRT is listed below, but don't score-based tests not use LRTs? Check Arnold et al. above.
+
+
+
+
+
 tree_score$model # Single-group SEM fit to full sample (N = 1000)
 round(tree_score$lr, 2) == 818.54 # LR comparing single-group SEM to multigroup SEM (split per binary P1 covariate)
 tree_score$p.uncorrected # 1.52e-173 (p value before Bonferroni correction)

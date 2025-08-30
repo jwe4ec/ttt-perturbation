@@ -53,7 +53,7 @@ load("./results/test_s-gimme/perturbR/perturbRout.RData")
 # group-level model for each person) that each person shares with every other person, 
 # but what are these correlations showing? Somehow rescaling?
 
-a <- cor(gimme_output$sim_matrix) # TODO: See if gimme has special method for "cor()"
+a <- cor(gimme_output$sim_matrix)
 
 perturbR_path <- "./results/test_s-gimme/perturbR/"
 

@@ -48,10 +48,14 @@ load("./results/test_s-gimme/perturbR/perturbRout.RData")
 # Evaluate subgroups by visually inspecting correlogram of similarity matrix ----
 # ---------------------------------------------------------------------------- #
 
-# Similarity matrix shows the number of sig. (a) group-level paths and (b) candidate
+# TODO: Similarity matrix shows the number of sig. (a) group-level paths and (b) candidate
 # paths (based on expected parameter change for each modification index after fitting
 # group-level model for each person) that each person shares with every other person, 
 # but what are these correlations showing? Somehow rescaling?
+
+
+
+
 
 a <- cor(gimme_output$sim_matrix)
 
@@ -65,42 +69,61 @@ dev.off()
 # Evaluate robustness of subgroups by comparing subgroup assignments ----
 # ---------------------------------------------------------------------------- #
 
-# Note: Per Karrer et al. (2008; https://doi.org/10.1103/PhysRevE.77.046119), subgroups are robust if 
-# >= 20% of edges in similarity matrix can be perturbed (i.e., alpha >= 20%) before similarity values 
-# cross similarity value when 20% of participants (nodes in similarity matrix) are randomly assigned 
-# to different subgroups (see "perturbR-vignette.html" above)
+# Note: "perturbR-vignette.html" above says that, per Karrer et al. (2008; https://doi.org/10.1103/PhysRevE.77.046119), 
+# subgroups are robust if >= 20% of edges in the similarity matrix can be perturbed (i.e., alpha >= 20%) before the
+# similarity value between the perturbed similarity matrix and the original, unperturbed matrix crosses the similarity 
+# value when 20% of participants are randomly assigned to different subgroups
 
-  # TODO: Why would you compare similarity when perturbing edges of similarity matrix to similarity 
-  # when perturbing participants' subgroups? The similarity matrix doesn't contain information about
-  # what subgroup participants are in, correct? So how does perturbing participants' subgroups work?
+  # However, rather than emphasizing alpha >= 20% per se, Karrer et al. actually emphasize whether (a) the alpha when
+  # the similarity value between the perturbed matrix and the original matrix crosses the similarity value when 20% of
+  # participants are randomly assigned to different subgroups is greater than (b) the alpha when the similarity value
+  # between the perturbed random matrix and the original random matrix crosses this value (see pp. 6-8). If so, then 
+  # Karrer et al. consider the subgroups robust. Moreover, Karrer et al. also consider the differences between the two
+  # similarity curves overall; even if the alpha at which both curves cross this value is similar, if the curve for the
+  # perturbed observed matrix is distinct from the curve for the perturbed random matrix at higher values of alpha, then
+  # Karrer et al. consider "some portion of the community structure found is relatively robust" (p. 8 and Figure 2d).
+
+  # Note: Given that the similarity matrix doesn't directly specify what subgroup participants are in, "perturbR()" finds      # the "true" subgroup membership of original, unperturbed similarity matrix using "walktrap.community()". It then
+  # perturbs the network and finds the subgroup membership of perturbed similarity matrix using "walktrap.community()"
+  # again. Both ARI and VI are computed by comparing the two sets of group memberships (using "arandi()" and "vi.dist()").
 
 # For Adjusted Rand Index (ARI; higher values reflect greater similarity)
 
 ari20mark <- perturbRout$ari20mark
 
 round(ari20mark, 2) == .33 # Bottom line in ARI plot (when 20% of subgroup assignments are swapped)
-perturbRout$percent[min(which(colMeans(perturbRout$ARI) < ari20mark))] = .61 # Alpha at intersection
+perturbRout$percent[min(which(colMeans(perturbRout$ARI) < ari20mark))] = .61 # Alpha at intersection for observed matrix
+
+  # "perturbR-vignette.html" emphasizes this comparison
 
 (ari_at_20 <- round(mean(perturbRout$ARI[, which(round(perturbRout$percent, 2) == .20)]), 2)) == .88 # ARI at alpha of 20%
 
-ari_at_20 > ari20mark # Thus, subgroups are robust per ARI
+ari_at_20 > ari20mark # Thus, subgroups are robust to perturbation per ARI
+
+  # But Karrer et al. emphasize that alpha at intersection for obs. matrix (.61) > alpha at intersection for random matrix 
 
 # For Variation of Information (VI; lower values reflect greater similarity)
 
 vi20mark <- perturbRout$vi20mark
 
 round(vi20mark, 2) == 1.40 # Top line in VI plot (when 20% of subgroup assignments are swapped)
-perturbRout$percent[min(which(colMeans(perturbRout$VI) > vi20mark))] == .61 # Alpha at intersection
+perturbRout$percent[min(which(colMeans(perturbRout$VI) > vi20mark))] == .61 # Alpha at intersection for observed matrix
+
+  # "perturbR-vignette.html" emphasizes this comparison
 
 (vi_at_20 <- round(mean(perturbRout$VI[, which(round(perturbRout$percent, 2) == .20)]), 2)) == .26 # VI at alpha of 20%
 
-vi_at_20 < vi20mark # Thus, subgroups are robust per VI
+vi_at_20 < vi20mark # Thus, subgroups are robust to perturbation per VI
+
+  # But Karrer et al. emphasize that alpha at intersection for obs. matrix (.61) > alpha at intersection for random matrix
+  # (in this case, similarity curve for random matrix is never below the top line in VI plot, so never even intersects it)
 
 # ---------------------------------------------------------------------------- #
 # Evaluate robustness of subgroups by comparing modularity values ----
 # ---------------------------------------------------------------------------- #
 
-# Note: See Gates et al. (2017, p. 142) for limitations of using modularity
+# Note: See Gates et al. (2017, p. 142) and Karrer et al. (2008, discussion of
+# z-scores on pp. 2 and 8) for limitations of using modularity
 
 cutoff <- perturbRout$cutoff
 
@@ -119,7 +142,7 @@ abline(v = cutoff, col = "black", lty = 2)
 abline(v = perturbRout$modularity[1, 1], col = "red")
 dev.off()
 
-# TODO: Maybe we could consider a homogeneity test to reject null of one cluster
+# TODO: Maybe we could also consider a homogeneity test to reject null of one cluster
 # - Steinley and Brusco (2011)’s lower bound ratio (LBR) test, which determines 
 #   whether the ratio of the within-cluster sum of squares for the 2-means solution 
 #   to the sum-of-squares total (SSE^2 / SST) is < the lower bound of the ratio that 

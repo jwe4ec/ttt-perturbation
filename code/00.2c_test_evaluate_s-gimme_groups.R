@@ -48,14 +48,10 @@ load("./results/test_s-gimme/perturbR/perturbRout.RData")
 # Evaluate subgroups by visually inspecting correlogram of similarity matrix ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Similarity matrix shows the number of sig. (a) group-level paths and (b) candidate
+# Similarity matrix shows the number of sig. (a) group-level paths and (b) candidate
 # paths (based on expected parameter change for each modification index after fitting
-# group-level model for each person) that each person shares with every other person, 
-# but what are these correlations showing? Somehow rescaling?
-
-
-
-
+# group-level model for each person) that each person shares with every other person.
+# Correlogram shows correlations among participants' numbers of sig. shared paths.
 
 a <- cor(gimme_output$sim_matrix)
 
@@ -83,7 +79,8 @@ dev.off()
   # perturbed observed matrix is distinct from the curve for the perturbed random matrix at higher values of alpha, then
   # Karrer et al. consider "some portion of the community structure found is relatively robust" (p. 8 and Figure 2d).
 
-  # Note: Given that the similarity matrix doesn't directly specify what subgroup participants are in, "perturbR()" finds      # the "true" subgroup membership of original, unperturbed similarity matrix using "walktrap.community()". It then
+  # Note: Given that the similarity matrix doesn't directly specify what subgroup participants are in, "perturbR()" finds
+  # the "true" subgroup membership of original, unperturbed similarity matrix using "walktrap.community()". It then
   # perturbs the network and finds the subgroup membership of perturbed similarity matrix using "walktrap.community()"
   # again. Both ARI and VI are computed by comparing the two sets of group memberships (using "arandi()" and "vi.dist()").
 

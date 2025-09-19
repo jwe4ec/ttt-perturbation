@@ -50,6 +50,7 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 # GIMME approach in "search.paths.ind()"
 # - https://github.com/GatesLab/gimme/blob/master/R/indSEM.R
 # - https://github.com/GatesLab/gimme/blob/master/R/setup.R
+# - https://github.com/GatesLab/gimme/blob/master/R/indiv.search.R
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
 # - https://github.com/GatesLab/gimme/blob/master/R/fit.model.R
 

@@ -48,9 +48,10 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 
 # Try GIMME's model-fitting approach in "fit.model()" and check convergence using 
 # GIMME approach in "search.paths.ind()"
+# - https://github.com/GatesLab/gimme/blob/master/R/indSEM.R
 # - https://github.com/GatesLab/gimme/blob/master/R/setup.R
-# - https://github.com/GatesLab/gimme/blob/master/R/fit.model.R
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
+# - https://github.com/GatesLab/gimme/blob/master/R/fit.model.R
 
 # Fit saturated idiographic VAR model and check convergence on example data for 5 participants
 

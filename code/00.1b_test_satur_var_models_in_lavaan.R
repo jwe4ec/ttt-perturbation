@@ -75,6 +75,22 @@ all(is.na(indices$pvalue))                              # All have NA for "pvalu
 
 
 
+# TODO: Add these elements to "dat" list to compile results
+#   dat$candidate_paths
+#   dat$candidate_corr
+#   dat$varnames
+#   dat$n_lagged
+#   dat$n_vars_total
+#   dat$out
+#   dat$ind_dir
+#   dat$file_order
+#   dat$plot
+#   dat$hybrid
+
+
+
+
+
 # TODO (revise for our case): Compile results if model converged
 
 op           <- NULL # appease CRAN check
@@ -134,7 +150,7 @@ if (converge & !zero_se) {
   #colnames(ind_betas) <- colnames(ind_ses) <- dat$varnames
   #   } # stl comment out 11.20.17 
   
-  if (dat$agg & !is.null(dat$out)) {   # TODO: Continue here once "dat" is created
+  if (dat$agg & !is.null(dat$out)) {   # TODO: This part not needed assuming "agg" is FALSE (it is for our case)
     
     write.csv(ind_betas, file.path(dat$out, "allBetas.csv"), 
               row.names = TRUE)
@@ -149,7 +165,7 @@ if (converge & !zero_se) {
     write.csv(ind_psi, file.path(dat$out, "allPsi.csv"),row.names = TRUE)
     write.csv(ind_psi_unstd, file.path(dat$out, "allPsiUnstd.csv"),row.names = TRUE)
     
-  } else if (!dat$agg & !is.null(dat$out)) { # & ind$n_ind_paths[k]>0)
+  } else if (!dat$agg & !is.null(dat$out)) { # & ind$n_ind_paths[k]>0)      # TODO: Create "dat"
     write.csv(ind_betas, file.path(dat$ind_dir, 
                                    paste0(dat$file_order[k,2], 
                                           "BetasStd.csv")), row.names = TRUE)

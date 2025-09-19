@@ -73,13 +73,6 @@ all(is.na(indices$pvalue))                              # All have NA for "pvalu
 
 
 
-# TODO: Find where in GIMME "add_p$goodfit" is created and consider evaluating
-# model fit based on that procedure
-
-
-
-
-
 # Compile results if model converged
 
 op           <- NULL # appease CRAN check

@@ -73,7 +73,7 @@ all(is.na(indices$pvalue))                              # All have NA for "pvalu
 
 
 
-# Compile results if model converged
+# TODO (revise for our case): Compile results if model converged
 
 op           <- NULL # appease CRAN check
 ind_plot     <- NA
@@ -237,7 +237,7 @@ if (converge & !zero_se) {
   }
 }
 
-# Compile results if model did not converge
+# TODO (revise for our case): Compile results if model did not converge
 
 if (!converge | zero_se) {
   status1 <- "nonconvergence"
@@ -254,7 +254,7 @@ if (!converge | zero_se) {
   ind_vcov_full <- NA
 }
 
-  # Wrap up
+# TODO (revise for our case): Wrap up
 
 syntax <- syntax
 # name <- names(dat$ts_list)[k]   # TODO: Create "dat"
@@ -273,8 +273,6 @@ new.obj <- list(status        = status1,
                 syntax        = syntax)
 
 ## end get.params if n_sub == 1
-
-return(new.obj)
 
 
 

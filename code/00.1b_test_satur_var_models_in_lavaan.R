@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- #
-# Test Saturated Idiographic VAR Models in GIMME ----
+# Test Saturated Idiographic VAR Models in lavaan ----
 # Author: Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
@@ -35,60 +35,22 @@ dat_ls <- ts
 dat_mat_ls <- lapply(dat_ls, as.matrix)
 
 # ---------------------------------------------------------------------------- #
-# Try to fit saturated GIMME idiographic VAR models ----
+# Fit saturated idiographic VAR models with GIMME paths in "lavaan" ----
 # ---------------------------------------------------------------------------- #
 
-# Create paths for saturated model from example participant's data matrix using function above
+# Create paths for saturated model from example participant's data matrix using helper function
 
 satur_gimme_paths <- create_satur_gimme_paths(dat_mat_ls[[1]])
 
-# Create lagged variables per GIMME method using function above
+# Create lagged variables per GIMME method using helper function
 
 dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
-
-# Fit saturated idiographic VAR models (as when "ar = TRUE" and "VAR = TRUE")
-
-# satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/test/raw/",
-#                            paths = satur_gimme_paths$all$paths)
-
-  # TODO: Resolve errors like this for each individual:
-  #   individual-level search, subject 1 (ts1)
-  #   Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
-  #     lavaan ERROR: duplicate model element in: V1~~V1
-  #   Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
-  #     lavaan ERROR: duplicate model element in: V1~~V1
-  #   Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
-  #     lavaan ERROR: duplicate model element in: V1~~V1
-
-  # TODO: Resolve other errors and warnings:
-  #   Error in coefs[!coefs$param %in% dat$nonsense_paths, ] : 
-  #     incorrect number of dimensions
-  #   In addition: Warning message:
-  #     In coefs$id <- rep(names(store$coefs), sapply(store$coefs, nrow)) :
-  #     Coercing LHS to a list
-
-  # Try specifying "VAR = TRUE" per Katie Gates's advice on 7/29/2025, who said doing 
-  # so may resolve the first set of errors (and said the second set of errors may be
-  # due to convergence issues. However, both sets of errors remain.
-
-# satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/test/raw/",
-#                            paths = satur_gimme_paths$all$paths, VAR = TRUE)
-
-# Per Gates and Molenaar (2012), GIMME starts with an empty model, so it seems
-# that it never estimates a saturated model. Thus, try fitting saturated model
-# with GIMME paths directly in "lavaan" instead.
-
-# ---------------------------------------------------------------------------- #
-# Fit saturated idiographic VAR models with GIMME paths in "lavaan" ----
-# ---------------------------------------------------------------------------- #
 
 # Try GIMME's model-fitting approach in "fit.model()" and check convergence using 
 # GIMME approach in "search.paths.ind()"
 # - https://github.com/GatesLab/gimme/blob/master/R/setup.R
 # - https://github.com/GatesLab/gimme/blob/master/R/fit.model.R
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
-
-library(lavaan)
 
 # Fit saturated idiographic VAR model and check convergence on example data for 5 participants
 
@@ -114,9 +76,9 @@ all(is.na(indices$pvalue))                              # All have NA for "pvalu
 testWeights <- function(fit, dat) {
   ind_betas <- round(lavInspect(fit, "std")$beta, digits = 4)
   #added to ensure correct ordering in matrices
-  ind_betas <- ind_betas[dat$varLabels$endo, ]
-  ind_betas <- ind_betas[, dat$varLabels$coln]
-  test      <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) | 
+  ind_betas <- ind_betas[dat$varLabels$endo, ]   # TODO: "endo" is original nonlagged variable names
+  ind_betas <- ind_betas[, dat$varLabels$coln]   # TODO: "coln" is lagged and nonlagged variable names
+  test      <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) |   # TODO: "n_endog" is # number of original nonlagged variables
     any(Re(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values) >= 1)
   
   return(test)
@@ -353,11 +315,6 @@ new.obj <- list(status        = status1,
 ## end get.params if n_sub == 1
 
 return(new.obj)
-
-
-
-
-
 
 
 

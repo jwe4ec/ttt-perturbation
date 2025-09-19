@@ -22,120 +22,6 @@ dat_ls <- ts
 dat_mat_ls <- lapply(dat_ls, as.matrix)
 
 # ---------------------------------------------------------------------------- #
-# Define code_satur_gimme_model_paths() helper function ----
-# ---------------------------------------------------------------------------- #
-
-# Define function to create GIMME paths for saturated model where "ar = TRUE"
-# and "VAR = TRUE" from example participant's data matrix
-
-create_satur_gimme_paths <- function(dat_mat) {
-  # Specify variables and design matrices
-  
-  vars_current <- colnames(dat_mat)
-  vars_lagged <- paste0(vars_current, "lag")
-  
-  n_vars <- length(vars_current)
-  
-  current_mat           <- matrix(1, n_vars, n_vars,
-                                  dimnames = list(vars_current, vars_current))
-  lagged_mat            <- matrix(1, n_vars, n_vars,
-                                  dimnames = list(vars_lagged,  vars_lagged))
-  lagged_to_current_mat <- matrix(1, n_vars, n_vars,
-                                  dimnames = list(vars_current, vars_lagged))
-  
-  # Specify variances for current variables (diagonal)
-  
-  variances_current <- paste0(vars_current, "~~", vars_current)
-  
-  # Specify intercepts for current variables
-  
-  intercepts_current <- paste0(vars_current, "~1")
-  
-  # Specify variances and covariances among lagged variables (diagonal and lower tri)
-  
-  idx <- as.data.frame(which(lower.tri(lagged_mat, diag = TRUE), arr.ind = TRUE))
-  
-  varcov_lagged <- apply(idx, 1, function(x) {
-    paste0(vars_lagged[x["row"]], "~~", vars_lagged[x["col"]])
-  })
-  
-  # Specify intercepts for lagged variables
-  
-  intercepts_lagged <- paste0(vars_lagged, "~1")
-  
-  # Specify lagged variables not predicted by current variables (entire matrix)
-  
-  current_to_lagged <- vector()
-  
-  for (var_lagged in vars_lagged) {
-    current_to_lagged_for_var_lagged <- paste0(var_lagged, "~0*", vars_current)
-    
-    current_to_lagged <- c(current_to_lagged, current_to_lagged_for_var_lagged)
-  }
-  
-  # Specify autoregressive paths (diagonal)
-  
-  autoreg <- paste(vars_current, vars_lagged, sep = "~")
-  
-  # Specify undirected contemporaneous relations among current variables (lower tri; among residuals?)
-  
-  idx <- as.data.frame(which(lower.tri(current_mat), arr.ind = TRUE))
-  
-  cov_current <- apply(idx, 1, function(x) {
-    paste0(vars_current[x["row"]], "~~", vars_current[x["col"]])
-  })
-  
-  # Specify cross-lagged relations (lower tri and upper tri)
-  
-  idx <- as.data.frame(which(lower.tri(lagged_to_current_mat) | upper.tri(lagged_to_current_mat), 
-                             arr.ind = TRUE))
-  
-  cross_lagged <- apply(idx, 1, function(x) {
-    paste0(vars_current[x["row"]], "~~", vars_lagged[x["col"]])
-  })
-  
-  # Specify paths
-  
-  paths <- list(variances_current  = variances_current,
-                intercepts_current = intercepts_current,
-                varcov_lagged      = varcov_lagged,
-                intercepts_lagged  = intercepts_lagged,
-                current_to_lagged  = current_to_lagged,
-                autoreg            = autoreg,
-                cov_current        = cov_current,
-                cross_lagged       = cross_lagged)
-  
-  paths$all <- unlist(paths, use.names = FALSE)
-  
-  # Include number of paths
-  
-  paths <- lapply(paths, function(x) {
-    list(length = length(x),
-         paths = x)
-  })
-  
-  return(paths)
-}
-
-# ---------------------------------------------------------------------------- #
-# Define create_lagged_vars_for_satur_gimme_model() helper function ----
-# ---------------------------------------------------------------------------- #
-
-# Define function to create lagged variables (append "lag" to current variables) using GIMME method in "setupTransformData.R"
-# (see https://github.com/GatesLab/gimme/blob/a633a143108315941a2d09701ec7c204b4742087/R/setupTransformData.R#L131-L158 )
-
-create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
-  dat_mat_ls <- lapply(dat_mat_ls, function(mat){
-    first           <- mat[1:(nrow(mat) - 1), ]
-    second          <- mat[2:(nrow(mat)), ]
-    ts_lc           <- cbind(first, second)
-    colnames(ts_lc) <- c(paste0(colnames(mat), "lag"), colnames(mat))
-    
-    ts_lc
-  })
-}
-
-# ---------------------------------------------------------------------------- #
 # Try to fit saturated GIMME idiographic VAR models ----
 # ---------------------------------------------------------------------------- #
 
@@ -169,7 +55,8 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
   #     Coercing LHS to a list
 
   # Try specifying "VAR = TRUE" per Katie Gates's advice on 7/29/2025, who said doing 
-  # so may resolve the first set of errors. However, both sets of errors remain.
+  # so may resolve the first set of errors (and said the second set of errors may be
+  # due to convergence issues. However, both sets of errors remain.
 
 # satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/test/raw/",
 #                            paths = satur_gimme_paths$all$paths, VAR = TRUE)

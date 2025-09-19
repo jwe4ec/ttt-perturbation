@@ -77,64 +77,13 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 
 library(lavaan)
 
-# Define function to fit saturated idiographic VAR model and check convergence
-
-fit_and_check_satur_model <- function(data_file, syntax) {
-  # Fit model
-  
-  fit <- try(lavaan(syntax,
-                    data            = data_file,
-                    model.type      = "sem",
-                    missing         = "fiml",
-                    estimator       = "ml",
-                    int.ov.free     = FALSE,
-                    int.lv.free     = TRUE,
-                    auto.fix.first  = TRUE,
-                    auto.var        = TRUE,
-                    auto.cov.lv.x   = TRUE,
-                    auto.th         = TRUE,
-                    auto.delta      = TRUE,
-                    auto.cov.y      = FALSE,
-                    auto.fix.single = TRUE,
-                    warn            = FALSE))
-  
-  # Check for convergence if no error during model-fitting
-  
-  if (!inherits(fit, "try-error")){
-    converge <- lavaan::lavInspect(fit, "converged")
-    zero_se  <- sum(lavInspect(fit, "se")$beta, na.rm = TRUE) == 0
-    na_se    <- any(is.na(lavInspect(fit, what = "list")$se))
-    
-    if (converge & !na_se) { 
-      indices <- fitMeasures(fit, c("chisq", "df", "pvalue", "rmsea", "srmr", "nnfi", "cfi"))
-    } else {
-      indices <- NULL
-    }
-  } else {
-    indices  <- NULL
-    converge <- FALSE
-    zero_se  <- TRUE
-    nonconv  <- TRUE
-  }
-  
-  # Return fit and convergence indicators in list
-  
-  results <- list(fit      = fit,
-                  converge = converge,
-                  zero_se  = zero_se,
-                  na_se    = na_se,
-                  indices  = indices)
-  
-  return(results)
-}
-
-# Run function on example data for 5 participants
+# Fit saturated idiographic VAR model and check convergence on example data for 5 participants
 
 results_ls <- lapply(dat_mat_ls, fit_and_check_satur_model, syntax = satur_gimme_paths$all$paths)
 
-all(sapply(results_ls,       function(x) x$converge))   # All models converged
-all(sapply(results_ls,       function(x) !x$zero_se))   # None had zero SE
-all(sapply(results_ls,       function(x) !x$na_se))     # None had NA SE
+all(sapply(results_ls, function(x) x$converge))  # All models converged
+all(sapply(results_ls, function(x) !x$zero_se))  # None had zero SE
+all(sapply(results_ls, function(x) !x$na_se))    # None had NA SE
 
 indices <- t(sapply(results_ls, function(x) x$indices))
 indices <- as.data.frame(round(indices, 4))

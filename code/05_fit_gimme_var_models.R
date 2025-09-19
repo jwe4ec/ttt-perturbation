@@ -156,7 +156,7 @@ var_res_ls_std <- indSEM(dat_mat_ls, "./results/gimme/ind_sem/raw_std/",
 
 
 # ---------------------------------------------------------------------------- #
-# Fit saturated GIMME idiographic VAR models ----
+# Try to fit saturated GIMME idiographic VAR models ----
 # ---------------------------------------------------------------------------- #
 
 # Create paths for saturated model from example participant's data matrix
@@ -169,8 +169,33 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 
 # TODO (resolve errors and warnings): Fit saturated idiographic VAR models
 
-satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/ind_sem_satur/raw/",
-                           paths = satur_gimme_paths$all$paths)
+# gimme_satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/ind_sem_satur/raw/",
+#                                  paths = satur_gimme_paths$all$paths)
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Fit saturated idiographic VAR models using GIMME approaches in lavaan ----
+# ---------------------------------------------------------------------------- #
+
+library(lavaan)
+
+satur_var_res_ls <- lapply(dat_mat_ls, fit_and_check_satur_model, syntax = satur_gimme_paths$all$paths)
+
+all(sapply(satur_var_res_ls, function(x) x$converge))  # All models converged
+all(sapply(satur_var_res_ls, function(x) !x$zero_se))  # None had zero SE
+all(sapply(satur_var_res_ls, function(x) !x$na_se))    # None had NA SE
+
+indices <- t(sapply(satur_var_res_ls, function(x) x$indices))
+indices <- as.data.frame(round(indices, 4))
+
+all(indices[, c("chisq", "df", "rmsea", "srmr")] == 0)  # All have "chisq", "df", "rmsea", and "srmr" of 0
+all(indices[, c("nnfi", "cfi")]                  == 1)  # All have "nnfi" and "cfi" of 1
+all(is.na(indices$pvalue))                              # All have NA for "pvalue"
+
+# TODO: Continue evaluating and compiling results using GIMME approaches
 
 
 

@@ -160,6 +160,64 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
 }
 
 # ---------------------------------------------------------------------------- #
+# Define fit_and_check_satur_model() ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to fit saturated idiographic VAR model and check convergence
+# using GIMME's approaches in "fit.model()" and "search.paths.ind()"
+# - https://github.com/GatesLab/gimme/blob/master/R/fit.model.R
+# - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
+
+fit_and_check_satur_model <- function(data_file, syntax) {
+  # Fit model
+  
+  fit <- try(lavaan(syntax,
+                    data            = data_file,
+                    model.type      = "sem",
+                    missing         = "fiml",
+                    estimator       = "ml",
+                    int.ov.free     = FALSE,
+                    int.lv.free     = TRUE,
+                    auto.fix.first  = TRUE,
+                    auto.var        = TRUE,
+                    auto.cov.lv.x   = TRUE,
+                    auto.th         = TRUE,
+                    auto.delta      = TRUE,
+                    auto.cov.y      = FALSE,
+                    auto.fix.single = TRUE,
+                    warn            = FALSE))
+  
+  # Check for convergence if no error during model-fitting
+  
+  if (!inherits(fit, "try-error")){
+    converge <- lavaan::lavInspect(fit, "converged")
+    zero_se  <- sum(lavInspect(fit, "se")$beta, na.rm = TRUE) == 0
+    na_se    <- any(is.na(lavInspect(fit, what = "list")$se))
+    
+    if (converge & !na_se) { 
+      indices <- fitMeasures(fit, c("chisq", "df", "pvalue", "rmsea", "srmr", "nnfi", "cfi"))
+    } else {
+      indices <- NULL
+    }
+  } else {
+    indices  <- NULL
+    converge <- FALSE
+    zero_se  <- TRUE
+    nonconv  <- TRUE
+  }
+  
+  # Return fit and convergence indicators in list
+  
+  results <- list(fit      = fit,
+                  converge = converge,
+                  zero_se  = zero_se,
+                  na_se    = na_se,
+                  indices  = indices)
+  
+  return(results)
+}
+
+# ---------------------------------------------------------------------------- #
 # Define create_var_labels() ----
 # ---------------------------------------------------------------------------- #
 

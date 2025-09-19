@@ -152,20 +152,24 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/test/raw/",
                            paths = satur_gimme_paths$all$paths)
 
-# TODO: Resolve errors like this for each individual:
+  # TODO: Resolve errors like this for each individual:
+  #   individual-level search, subject 1 (ts1)
+  #   Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
+  #     lavaan ERROR: duplicate model element in: V1~~V1
+  #   Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
+  #     lavaan ERROR: duplicate model element in: V1~~V1
+  #   Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
+  #     lavaan ERROR: duplicate model element in: V1~~V1
 
-  # individual-level search, subject 1 (ts1)
-  # Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
-  #   lavaan ERROR: duplicate model element in: V1~~V1
-  # Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
-  #   lavaan ERROR: duplicate model element in: V1~~V1
-  # Error in lav_parse_model_string_orig(model.syntax = model.syntax, as.data.frame. = as.data.frame.,  : 
-  #   lavaan ERROR: duplicate model element in: V1~~V1
+  # TODO: Resolve other errors and warnings:
+  #   Error in coefs[!coefs$param %in% dat$nonsense_paths, ] : 
+  #     incorrect number of dimensions
+  #   In addition: Warning message:
+  #     In coefs$id <- rep(names(store$coefs), sapply(store$coefs, nrow)) :
+  #     Coercing LHS to a list
 
-# TODO: Resolve other errors and warnings:
+  # Try specifying "VAR = TRUE" per Katie Gates's advice on 7/29/2025, who said doing 
+  # so may resolve the first set of errors. However, both sets of errors remain.
 
-  # Error in coefs[!coefs$param %in% dat$nonsense_paths, ] : 
-  #   incorrect number of dimensions
-  # In addition: Warning message:
-  #   In coefs$id <- rep(names(store$coefs), sapply(store$coefs, nrow)) :
-  #   Coercing LHS to a list
+satur_var_res_ls <- indSEM(dat_mat_ls, "./results/gimme/test/raw/",
+                           paths = satur_gimme_paths$all$paths, VAR = TRUE)

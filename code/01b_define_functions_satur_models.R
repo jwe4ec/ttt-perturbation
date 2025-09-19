@@ -104,7 +104,7 @@ create_satur_gimme_paths <- function(dat_mat) {
 # ---------------------------------------------------------------------------- #
 
 # Define function to create lagged variables (append "lag" to current variables) using GIMME method in "setupTransformData.R"
-# (see https://github.com/GatesLab/gimme/blob/a633a143108315941a2d09701ec7c204b4742087/R/setupTransformData.R#L131-L158 )
+# - https://github.com/GatesLab/gimme/blob/a633a143108315941a2d09701ec7c204b4742087/R/setupTransformData.R#L131-L158
 
 create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
   dat_mat_ls <- lapply(dat_mat_ls, function(mat){
@@ -118,6 +118,61 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
 }
 
 # ---------------------------------------------------------------------------- #
+# Define setup_dat_for_testWeights() ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to create limited version of "dat" for use in testWeights() below
+# using GIMME's approach in "setup()"
+# - https://github.com/GatesLab/gimme/blob/master/R/setup.R
+
+setup_dat_for_testWeights <- function(data_file) {
+  # Note: Simplified the following for our case (i.e., assuming that "exogenous",
+  # "conv_vars", and "mult_vars" of "indSEM()" are NULL and that "data_file" already 
+  # contains the lagged variables created via create_lagged_vars_for_satur_gimme_model()
+  
+  orig <- colnames(data_file)[!grepl("lag", colnames(data_file))]
+  lagg <- paste0(orig, "lag")
+  exog <- lagg
+  endo <- setdiff(orig, exog)
+  coln <- unique(c(lagg, endo))
+  
+  varLabels <- list(orig = orig,
+                    lagg = lagg,
+                    exog = exog,
+                    endo = endo,
+                    coln = coln)
+  
+  dat <- list("n_endog"   = length(varLabels$endo),
+              "varLabels" = varLabels)
+  
+  return(dat)
+}
+
+# ---------------------------------------------------------------------------- #
+# Define testWeights() ----
+# ---------------------------------------------------------------------------- #
+
+# Define testWeights() from "search.paths.ind.R" for use in fit_and_check_satur_model() below
+# - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
+
+# TODO: What does this check exactly?
+
+
+
+
+
+testWeights <- function(fit, dat) {
+  ind_betas <- round(lavInspect(fit, "std")$beta, digits = 4)
+  #added to ensure correct ordering in matrices
+  ind_betas <- ind_betas[dat$varLabels$endo, ]                           # TODO: "endo" is original nonlagged variable names
+  ind_betas <- ind_betas[, dat$varLabels$coln]                           # TODO: "coln" is lagged and nonlagged variable names
+  test      <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) |  # TODO: "n_endog" is number of original variables
+    any(Re(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values) >= 1)
+  
+  return(test)
+}
+
+# ---------------------------------------------------------------------------- #
 # Define fit_and_check_satur_model() ----
 # ---------------------------------------------------------------------------- #
 
@@ -127,6 +182,10 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
 
 fit_and_check_satur_model <- function(data_file, syntax) {
+  # Set up limited "dat" object for use in "testWeights()" below
+  
+  dat <- setup_dat_for_testWeights(data_file)
+  
   # Fit model
   
   fit <- try(lavaan(syntax,
@@ -148,16 +207,35 @@ fit_and_check_satur_model <- function(data_file, syntax) {
   # Check for convergence if no error during model-fitting
   
   if (!inherits(fit, "try-error")){
-    converge <- lavaan::lavInspect(fit, "converged")
-    zero_se  <- sum(lavInspect(fit, "se")$beta, na.rm = TRUE) == 0   # If all non-NA SEs are 0
-    na_se    <- any(is.na(lavInspect(fit, what = "list")$se))        # If any SEs are NA
+    converge     <- lavaan::lavInspect(fit, "converged")
+    zero_se      <- sum(lavInspect(fit, "se")$beta, na.rm = TRUE) == 0   # If all non-NA SEs are 0
+    na_se        <- any(is.na(lavInspect(fit, what = "list")$se))        # If any SEs are NA
+    test_weights <- testWeights(fit, dat)                                # TODO: Define meaning of this (TRUE is bad)
     
     if (converge & !na_se) { 
       indices <- fitMeasures(fit, c("chisq", "df", "pvalue", "rmsea", "srmr", "nnfi", "cfi"))
     } else {
       indices <- NULL
     }
+    
+    # TODO (check the whole convergence logic and simplify): Do additional checks
+    
+    if (converge & !zero_se & !test_weights){
+      status1 <- "converged normally"
+      nonconv <- FALSE
+    } else {
+      # TODO (what happens to "nonconv" and do we need it at all?): if no convergence or unstable
+      if (!converge | zero_se | test_weights) {
+        if (test_weights | zero_se) {
+          status1 <- "unstable solution"
+        } else if (!converge) {
+          status1 <- "nonconvergence"
+        }
+      }
+    }
+
   } else {
+    # TODO: What about "na_se", "test_weights", and "status1" in this case?
     indices  <- NULL
     converge <- FALSE
     zero_se  <- TRUE
@@ -166,11 +244,14 @@ fit_and_check_satur_model <- function(data_file, syntax) {
   
   # Return fit and convergence indicators in list
   
-  results <- list(fit      = fit,
-                  converge = converge,
-                  zero_se  = zero_se,
-                  na_se    = na_se,
-                  indices  = indices)
+  results <- list(dat          = dat,
+                  fit          = fit,
+                  converge     = converge,
+                  zero_se      = zero_se,
+                  na_se        = na_se,
+                  test_weights = test_weights,
+                  indices      = indices,
+                  status1      = status1)
   
   return(results)
 }

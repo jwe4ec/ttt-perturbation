@@ -56,9 +56,11 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 
 results_ls <- lapply(dat_mat_ls, fit_and_check_satur_model, syntax = satur_gimme_paths$all$paths)
 
-all(sapply(results_ls, function(x) x$converge))  # All models converged
-all(sapply(results_ls, function(x) !x$zero_se))  # None had zero SE
-all(sapply(results_ls, function(x) !x$na_se))    # None had NA SE
+all(sapply(results_ls, function(x) x$converge))                        # All models converged
+all(sapply(results_ls, function(x) !x$zero_se))                        # None had zero SE
+all(sapply(results_ls, function(x) !x$na_se))                          # None had NA SE
+all(sapply(results_ls, function(x) !x$test_weights))                   # None had bad test weights
+all(sapply(results_ls, function(x) x$status1 == "converged normally")) # All converged normally
 
 indices <- t(sapply(results_ls, function(x) x$indices))
 indices <- as.data.frame(round(indices, 4))
@@ -71,44 +73,9 @@ all(is.na(indices$pvalue))                              # All have NA for "pvalu
 
 
 
-# TODO (create "dat"; see GIMME's "setup()"): Define function for testing stability
-
-testWeights <- function(fit, dat) {
-  ind_betas <- round(lavInspect(fit, "std")$beta, digits = 4)
-  #added to ensure correct ordering in matrices
-  ind_betas <- ind_betas[dat$varLabels$endo, ]   # TODO: "endo" is original nonlagged variable names
-  ind_betas <- ind_betas[, dat$varLabels$coln]   # TODO: "coln" is lagged and nonlagged variable names
-  test      <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) |   # TODO: "n_endog" is # number of original nonlagged variables
-    any(Re(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values) >= 1)
-  
-  return(test)
-}
-
-# TODO: Create "dat" object so "testWeights()" can be tested
-# - See "search.paths.ind()" where "dat" is 
-# "@param dat Object created at beginning of gimme containing static info."
-# - Find GIMME code where "search.paths.ind()" is called to see where "dat" is created
-
-# if (converge & !zero_se & !testWeights(fit, dat)){
-#   status1 <- "converged normally"
-#   nonconv <- FALSE
-# } else {
-#   # if no convergence or unstable
-#   if (!converge | zero_se | testWeights(fit, dat)) {
-#       if (testWeights(fit, dat) | zero_se)
-#         status1 <- "unstable solution"
-#         break
-#       if (!converge)
-#         status1 <- "nonconvergence"
-#         break
-#   }
-# }
-
-
-
-
 # TODO: Find where in GIMME "add_p$goodfit" is created and consider evaluating
 # model fit based on that procedure
+
 
 
 

@@ -4,14 +4,27 @@
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-# Setup ----
+# Check R version and load packages ----
 # ---------------------------------------------------------------------------- #
 
-# Load package and set seed
+# Load custom functions
 
-library(gimme)
+source("./code/01_define_functions.R")
+source("./code/01b_define_functions_satur_models.R")
+
+# Check R version, load groundhog package, and specify groundhog_day
+
+groundhog_day <- version_control()
+
+# Load packages and set seed
+
+groundhog.library(c("gimme", "lavaan"), groundhog_day)
 
 set.seed(1234)
+
+# ---------------------------------------------------------------------------- #
+# Load data ----
+# ---------------------------------------------------------------------------- #
 
 # Load example data for 5 individuals, each with 50 observations on 3 variables
 

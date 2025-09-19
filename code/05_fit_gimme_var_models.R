@@ -11,18 +11,15 @@
 # directory to parent folder
 
 # ---------------------------------------------------------------------------- #
-# Store working directory, check correct R version, load packages ----
+# Check R version and load packages ----
 # ---------------------------------------------------------------------------- #
-
-# Store working directory
-
-wd_dir <- getwd()
 
 # Load custom functions
 
 source("./code/01_define_functions.R")
+source("./code/01b_define_functions_satur_models.R")
 
-# Check correct R version, load groundhog package, and specify groundhog_day
+# Check R version, load groundhog package, and specify groundhog_day
 
 groundhog_day <- version_control()
 

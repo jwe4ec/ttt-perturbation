@@ -75,23 +75,7 @@ all(is.na(indices$pvalue))                              # All have NA for "pvalu
 
 
 
-# TODO: Add these elements to "dat" list to compile results
-#   dat$candidate_paths
-#   dat$candidate_corr
-#   dat$varnames
-#   dat$n_lagged
-#   dat$n_vars_total
-#   dat$out
-#   dat$ind_dir
-#   dat$file_order
-#   dat$plot
-#   dat$hybrid
-
-
-
-
-
-# TODO (revise for our case): Compile results if model converged
+# TODO (add elements to "dat" and revise for our case): Compile results if model converged
 
 op           <- NULL # appease CRAN check
 ind_plot     <- NA
@@ -104,23 +88,23 @@ if (converge & !zero_se) {
   ind_fit[2] <- round(ind_fit[2], digits = 0)
   
   r2         <- inspect(fit, "rsquare")
-  # r2         <- r2[dat$varLabels$endo]   # TODO: Find out where "dat" is created and create it
+  r2         <- r2[dat$varLabels$endo]
   
   ind_fit    <- c(ind_fit, round(r2, digits = 4))
   
   ind_vcov_full <- lavInspect(fit, "vcov.std.all")
-  # keep          <- rownames(ind_vcov_full) %in% dat$candidate_paths   # TODO: Find out where "dat" is created and create it,
-  # ind_vcov      <- ind_vcov_full[keep, keep]                          #       but this may not be needed for saturated model
+  # keep          <- rownames(ind_vcov_full) %in% dat$candidate_paths   # TODO: Add "candidate_paths" to "dat",
+  # ind_vcov      <- ind_vcov_full[keep, keep]                          #   but may not be needed for saturated model
   
   ind_coefs_unst0 <- parameterEstimates(fit)
   ind_coefs_unst_idx <- paste0(ind_coefs_unst0$lhs, ind_coefs_unst0$op, ind_coefs_unst0$rhs)
   # ind_coefs_unst <- ind_coefs_unst0[ind_coefs_unst0$op == "~" |
-  #                                     ind_coefs_unst_idx %in% c(dat$candidate_paths, dat$candidate_corr), ]   # TODO: Create "dat"
+  #                                     ind_coefs_unst_idx %in% c(dat$candidate_paths, dat$candidate_corr), ]   # TODO
   
   ind_coefs0 <- standardizedSolution(fit)
   ind_coefs_idx <- paste0(ind_coefs0$lhs,ind_coefs0$op,ind_coefs0$rhs)
   # ind_coefs <- ind_coefs0[ind_coefs0$op == "~" |
-  #                           ind_coefs_idx %in% c(dat$candidate_paths, dat$candidate_corr), ]   # TODO: Create "dat"
+  #                           ind_coefs_idx %in% c(dat$candidate_paths, dat$candidate_corr), ]   # TODO
   
   # ind_coefs <- cbind(ind_coefs[, 1:3], ind_coefs_unst$est, ind_coefs[, 4:9])
   # colnames(ind_coefs) <- c("lhs", "op", "rhs", "est", "est.std", "se", "z", "pvalue", "ci.lower", "ci.upper")
@@ -131,26 +115,25 @@ if (converge & !zero_se) {
   ind_ses   <- round(lavInspect(fit, "se")$beta, digits = 4)
   
   #added to ensure correct ordering in matrices
-  # ind_betas <- ind_betas[dat$varLabels$endo, ]   # TODO: Create "dat"
-  # ind_betas <- ind_betas[, dat$varLabels$coln]
+  ind_betas <- ind_betas[dat$varLabels$endo, ]
+  ind_betas <- ind_betas[, dat$varLabels$coln]
   
-  # ind_ses <- ind_ses[dat$varLabels$endo, ]
-  # ind_ses <- ind_ses[, dat$varLabels$coln]
+  ind_ses <- ind_ses[dat$varLabels$endo, ]
+  ind_ses <- ind_ses[, dat$varLabels$coln]
   
   # zf added 2019-01-23
   ind_psi <- round(lavInspect(fit, "std")$psi, digits = 4)
   ind_psi_unstd <- round(lavInspect(fit, "estimates")$psi, digits = 4)
   
-  # ind_psi <- ind_psi[dat$varLabels$endo, ]  # TODO: Create "dat"
-  # ind_psi <- ind_psi[, dat$varLabels$coln]
-  # ind_psi_unstd <- ind_psi_unstd[dat$varLabels$endo, ]
-  # ind_psi_unstd <- ind_psi_unstd[, dat$varLabels$coln]
-  
-  #rownames(ind_betas) <- rownames(ind_ses) <- dat$varnames[(dat$n_lagged+1):(dat$n_vars_total)]
+  ind_psi <- ind_psi[dat$varLabels$endo, ]
+  ind_psi <- ind_psi[, dat$varLabels$coln]
+  ind_psi_unstd <- ind_psi_unstd[dat$varLabels$endo, ]
+  ind_psi_unstd <- ind_psi_unstd[, dat$varLabels$coln]
+  #rownames(ind_betas) <- rownames(ind_ses) <- dat$varnames[(dat$n_lagged + 1):(dat$n_vars_total)]
   #colnames(ind_betas) <- colnames(ind_ses) <- dat$varnames
   #   } # stl comment out 11.20.17 
   
-  if (dat$agg & !is.null(dat$out)) {   # TODO: This part not needed assuming "agg" is FALSE (it is for our case)
+  if (dat$agg & !is.null(dat$out)) {   # TODO: This part not needed if "agg" is FALSE (it is for our case)
     
     write.csv(ind_betas, file.path(dat$out, "allBetas.csv"), 
               row.names = TRUE)
@@ -165,7 +148,7 @@ if (converge & !zero_se) {
     write.csv(ind_psi, file.path(dat$out, "allPsi.csv"),row.names = TRUE)
     write.csv(ind_psi_unstd, file.path(dat$out, "allPsiUnstd.csv"),row.names = TRUE)
     
-  } else if (!dat$agg & !is.null(dat$out)) { # & ind$n_ind_paths[k]>0)      # TODO: Create "dat"
+  } else if (!dat$agg & !is.null(dat$out)) { # & ind$n_ind_paths[k]>0)   # TODO: Add elements to "dat"
     write.csv(ind_betas, file.path(dat$ind_dir, 
                                    paste0(dat$file_order[k,2], 
                                           "BetasStd.csv")), row.names = TRUE)
@@ -275,7 +258,7 @@ if (!converge | zero_se) {
 # TODO (revise for our case): Wrap up
 
 syntax <- syntax
-# name <- names(dat$ts_list)[k]   # TODO: Create "dat"
+# name <- names(dat$ts_list)[k]   # TODO: Add "ts_list" to "dat"
 
 new.obj <- list(status        = status1, 
                 ind_fit       = ind_fit, 

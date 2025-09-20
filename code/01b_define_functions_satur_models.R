@@ -118,14 +118,27 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Define setup_dat_for_testWeights() ----
+# Define setup_limited_dat() ----
 # ---------------------------------------------------------------------------- #
 
 # Define function to create limited version of "dat" for use in testWeights() below
-# using GIMME's approach in "setup()"
+# and for compiling results using GIMME's approach in "setup()"
 # - https://github.com/GatesLab/gimme/blob/master/R/setup.R
 
-setup_dat_for_testWeights <- function(data_file) {
+# TODO: Add these elements to "dat" list to compile results
+#   dat$candidate_paths
+#   dat$candidate_corr
+#   dat$out
+#   dat$ind_dir
+#   dat$file_order
+#   dat$plot
+#   dat$hybrid
+
+
+
+
+
+setup_limited_dat <- function(data_file) {
   # Note: Simplified the following for our case (i.e., assuming that "exogenous",
   # "conv_vars", and "mult_vars" of "indSEM()" are NULL and that "data_file" already 
   # contains the lagged variables created via create_lagged_vars_for_satur_gimme_model()
@@ -142,8 +155,11 @@ setup_dat_for_testWeights <- function(data_file) {
                     endo = endo,
                     coln = coln)
   
-  dat <- list("n_endog"   = length(varLabels$endo),
-              "varLabels" = varLabels)
+  dat <- list("n_lagged"     = length(varLabels$lagg),
+              "n_endog"      = length(varLabels$endo),
+              "n_vars_total" = length(varLabels$coln),
+              "varnames"     = varLabels$coln,
+              "varLabels"    = varLabels)
   
   return(dat)
 }
@@ -182,9 +198,9 @@ testWeights <- function(fit, dat) {
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
 
 fit_and_check_satur_model <- function(data_file, syntax) {
-  # Set up limited "dat" object for use in "testWeights()" below
+  # Set up limited "dat" object for "testWeights()" and for compiling results
   
-  dat <- setup_dat_for_testWeights(data_file)
+  dat <- setup_limited_dat(data_file)
   
   # Fit model
   

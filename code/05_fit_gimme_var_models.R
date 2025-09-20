@@ -25,7 +25,7 @@ groundhog_day <- version_control()
 
 # Load packages and set seed
 
-groundhog.library("gimme", groundhog_day)
+groundhog.library(c("gimme", "lavaan"), groundhog_day)
 
 set.seed(1234)
 
@@ -177,13 +177,13 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 # Fit saturated idiographic VAR models using GIMME approaches in lavaan ----
 # ---------------------------------------------------------------------------- #
 
-library(lavaan)
-
 satur_var_res_ls <- lapply(dat_mat_ls, fit_and_check_satur_model, syntax = satur_gimme_paths$all$paths)
 
-all(sapply(satur_var_res_ls, function(x) x$converge))  # All models converged
-all(sapply(satur_var_res_ls, function(x) !x$zero_se))  # None had zero SE
-all(sapply(satur_var_res_ls, function(x) !x$na_se))    # None had NA SE
+all(sapply(satur_var_res_ls, function(x) x$converge))                         # All models converged
+all(sapply(satur_var_res_ls, function(x) !x$zero_se))                         # None had zero SE
+all(sapply(satur_var_res_ls, function(x) !x$na_se))                           # None had NA SE
+all(sapply(satur_var_res_ls, function(x) !x$test_weights))                    # None had bad test weights
+all(sapply(satur_var_res_ls, function(x) x$status1 == "converged normally"))  # All converged normally
 
 indices <- t(sapply(satur_var_res_ls, function(x) x$indices))
 indices <- as.data.frame(round(indices, 4))

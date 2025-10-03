@@ -25,7 +25,7 @@ groundhog_day <- version_control()
 
 # Load packages and set seed
 
-groundhog.library(c("gimme", "lavaan"), groundhog_day)
+groundhog.library(c("gimme", "lavaan", "qgraph"), groundhog_day)
 
 set.seed(1234)
 
@@ -177,22 +177,33 @@ dat_mat_ls <- create_lagged_vars_for_satur_gimme_model(dat_mat_ls)
 # Fit saturated idiographic VAR models using GIMME approaches in lavaan ----
 # ---------------------------------------------------------------------------- #
 
-satur_var_res_ls <- lapply(dat_mat_ls, fit_and_check_satur_model, syntax = satur_gimme_paths$all$paths)
+satur_var_res_ls <- fit_check_compile_satur_models(dat_mat_ls,
+                                                   "./results/lavaan_satur/",
+                                                   satur_syntax = satur_gimme_paths$all$paths)
 
-all(sapply(satur_var_res_ls, function(x) x$converge))                         # All models converged
-all(sapply(satur_var_res_ls, function(x) !x$zero_se))                         # None had zero SE
-all(sapply(satur_var_res_ls, function(x) !x$na_se))                           # None had NA SE
-all(sapply(satur_var_res_ls, function(x) !x$test_weights))                    # None had bad test weights
-all(sapply(satur_var_res_ls, function(x) x$status1 == "converged normally"))  # All converged normally
+all(sapply(satur_var_res_ls$testing, function(x) x$converge))      # All models converged
+all(sapply(satur_var_res_ls$testing, function(x) !x$zero_se))      # None had zero SE
+all(sapply(satur_var_res_ls$testing, function(x) !x$na_se))        # None had NA SE
+all(sapply(satur_var_res_ls$testing, function(x) !x$test_weights)) # None had bad test weights
+all(unlist(satur_var_res_ls$status) == "converged normally")       # All converged normally
 
-indices <- t(sapply(satur_var_res_ls, function(x) x$indices))
-indices <- as.data.frame(round(indices, 4))
+ind_fits <- as.data.frame(do.call(rbind, satur_var_res_ls$fits))
 
-all(indices[, c("chisq", "df", "rmsea", "srmr")] == 0)  # All have "chisq", "df", "rmsea", and "srmr" of 0
-all(indices[, c("nnfi", "cfi")]                  == 1)  # All have "nnfi" and "cfi" of 1
-all(is.na(indices$pvalue))                              # All have NA for "pvalue"
+all(ind_fits[c("chisq", "df", "rmsea", "srmr")] == 0)  # All have "chisq", "df", "rmsea", and "srmr" of 0
+all(ind_fits[c("nnfi", "cfi")]                  == 1)  # All have "nnfi" and "cfi" of 1
+all(is.na(ind_fits$pvalue))                            # All have NA for "pvalue"
 
-# TODO: Continue evaluating and compiling results using GIMME approaches
+part_id <- "326177"
+options(max.print = 1e6)
+
+satur_var_res_ls$syntax[[part_id]]
+satur_var_res_ls$coefs[[part_id]]
+satur_var_res_ls$betas[[part_id]]
+plot(satur_var_res_ls$plots[[part_id]])
+satur_var_res_ls$vcov[[part_id]]      # TODO: What is this?
+satur_var_res_ls$vcovfull[[part_id]]  # TODO: Redundant with "ind_vcov" for saturated model
+satur_var_res_ls$psi[[part_id]]       # TODO: What is this?
+satur_var_res_ls$psiunstd[[part_id]]  # TODO: What is this?
 
 
 

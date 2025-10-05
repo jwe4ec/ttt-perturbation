@@ -201,7 +201,6 @@ satur_var_res_ls$coefs[[part_id]]
 satur_var_res_ls$betas[[part_id]]
 plot(satur_var_res_ls$plots[[part_id]])
 satur_var_res_ls$vcov[[part_id]]      # TODO: What is this?
-satur_var_res_ls$vcovfull[[part_id]]  # TODO: Redundant with "ind_vcov" for saturated model
 satur_var_res_ls$psi[[part_id]]       # TODO: What is this?
 satur_var_res_ls$psiunstd[[part_id]]  # TODO: What is this?
 

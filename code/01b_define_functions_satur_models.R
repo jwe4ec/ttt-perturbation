@@ -133,14 +133,6 @@ create_lagged_vars_for_satur_gimme_model <- function(dat_mat_ls) {
 # and for compiling results using GIMME approach in "setup.R"
 # - https://github.com/GatesLab/gimme/blob/master/R/setup.R
 
-# TODO: Add these elements to "dat" list to compile results
-#   dat$candidate_paths # Don't think it's needed for saturated model
-#   dat$candidate_corr  # Don't think it's needed for saturated model
-
-
-
-
-
 setup_limited_dat <- function(data_file, out, plot) {
   # Note: Simplified the following for our case
   
@@ -212,17 +204,31 @@ fit.model <- function(syntax, data_file) {
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
 
 # TODO: What does this check exactly?
+# - If any eigenvalues >= 1, system will explode (revisit meaning)
+# - If sum of all paths to a variable leads to value that is > than the value before
 
+# ind_betas example:
+
+# fitting individual-level model, subject 1 (ts1)
+# V1lag   V2lag   V3lag V1 V2 V3
+# V1 0.3897  0.0864  0.1061  0  0  0
+# V2 0.3847  0.5795 -0.0587  0  0  0
+# V3 0.1676 -0.0577  0.8567  0  0  0
 
 
 
 
 testWeights <- function(fit, dat) {
   ind_betas <- round(lavInspect(fit, "std")$beta, digits = 4)
-  #added to ensure correct ordering in matrices
-  ind_betas <- ind_betas[dat$varLabels$endo, ]                           # TODO: "endo" is original nonlagged variable names
-  ind_betas <- ind_betas[, dat$varLabels$coln]                           # TODO: "coln" is lagged and nonlagged variable names
-  test      <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) |  # TODO: "n_endog" is number of original variables
+  
+  # Ensure correct ordering in matrices
+  
+  ind_betas <- ind_betas[dat$varLabels$endo, ]                      # TODO: "endo" is original nonlagged variable names
+  ind_betas <- ind_betas[, dat$varLabels$coln]                      # TODO: "coln" is lagged and nonlagged variable names
+  
+  # Test weights
+  
+  test <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) |  # TODO: "n_endog" is number of original variables
     any(Re(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values) >= 1)
   
   return(test)
@@ -259,7 +265,8 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
   if (!inherits(fit, "try-error")) {
     converge     <- lavaan::lavInspect(fit, "converged")
     zero_se      <- sum(lavInspect(fit, "se")$beta, na.rm = TRUE) == 0   # If all non-NA SEs are 0
-    na_se        <- any(is.na(lavInspect(fit, what = "list")$se))        # If any SEs are NA
+    na_se        <- any(is.na(lavInspect(fit, what = "list")$se))        # If any SEs are NA (various potential reasons; 
+                                                                         #   e.g., crossing boundary condition)
     test_weights <- testWeights(fit, dat)                                # TODO: Define meaning of this (TRUE is bad)
     
     if (converge & !na_se) { 
@@ -277,7 +284,8 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
       # TODO (what happens to "nonconv" and do we need it at all?): if no convergence or unstable
       if (!converge | zero_se | test_weights) {
         if (test_weights | zero_se) {
-          status1 <- "unstable solution"
+          status1 <- "unstable solution"  # TODO: See what they do with this info if this is 
+                                          # the case (zero SE may be quirk of lavaan; maybe model couldn't get started)
         } else if (!converge) {
           status1 <- "nonconvergence"
         }
@@ -315,27 +323,19 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
 
     ind_fit <- c(ind_fit, round(r2, digits = 4))
 
-    ind_vcov_full <- lavInspect(fit, "vcov.std.all")
-    # keep          <- rownames(ind_vcov_full) %in% dat$candidate_paths   # TODO: Add "candidate_paths" to "dat",
-    # ind_vcov      <- ind_vcov_full[keep, keep]                          #   but may not be needed for saturated model.
-    #                                                                     #   In our case they're all but the AR effects.
-    ind_vcov <- ind_vcov_full                                             # Try keeping them all
+    # TODO: lavaan changes the lhs/rhs of some covariances in "lavInspect", "parameterEstimates", and
+    # "standardizedSolution" (seems to matter for restricted models--see filtering in original code)
     
-    ind_coefs_unst0 <- parameterEstimates(fit)                            # TODO: lavaan changes the lhs/rhs of some covariances
-                                                                          #   in "lavInspect", "parameterEstimates", and
-                                                                          #   "standardizedSolution" (seems to matter for 
-                                                                          #   restricted models--see filtering below)
-    # ind_coefs_unst_idx <- paste0(ind_coefs_unst0$lhs, ind_coefs_unst0$op, ind_coefs_unst0$rhs)
-    # ind_coefs_unst <- ind_coefs_unst0[ind_coefs_unst0$op == "~" |
-    #                                     ind_coefs_unst_idx %in% c(dat$candidate_paths, dat$candidate_corr), ]   # TODO: Keep all?
-    ind_coefs_unst <- ind_coefs_unst0                                                                             # Try keeping them all
+    
+    
+    
+    
+    # TODO: JE edited the following to keep all paths for our case
+    
+    ind_vcov       <- lavInspect(fit, "vcov.std.all")
+    ind_coefs_unst <- parameterEstimates(fit)    
+    ind_coefs      <- standardizedSolution(fit)
 
-    ind_coefs0 <- standardizedSolution(fit)
-    # ind_coefs_idx <- paste0(ind_coefs0$lhs,ind_coefs0$op,ind_coefs0$rhs)
-    # ind_coefs <- ind_coefs0[ind_coefs0$op == "~" |
-    #                           ind_coefs_idx %in% c(dat$candidate_paths, dat$candidate_corr), ]   # TODO: Keep all?
-    ind_coefs <- ind_coefs0                                                                        # Try keeping them all
-    
     ind_coefs <- data.frame(ind_coefs[c("lhs", "op", "rhs")],   # TODO: JE edited to avoid hardcoding
                             est = ind_coefs_unst$est,
                             ind_coefs[c("est.std", "se", "z", "pvalue", "ci.lower", "ci.upper")])
@@ -366,7 +366,7 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
     #   - Replaced "dat$file_order[k, 2]" with "part_id" (TODO: Ultimately need to change back)
     
     if (!is.null(dat$out)) {
-      if (!dir.exists(dat$ind_dir)) dir.create(dat$ind_dir, recursive = TRUE)   # TODO: JE added (but consider doing it GIMME's way)
+      if (!dir.exists(dat$ind_dir)) dir.create(dat$ind_dir, recursive = TRUE)   # TODO: JE added (but consider GIMME's way)
       
       write.csv(ind_betas,     file.path(dat$ind_dir, paste0(part_id, "BetasStd.csv")), row.names = TRUE)
       write.csv(ind_psi,       file.path(dat$ind_dir, paste0(part_id, "Psi.csv")), row.names = TRUE)
@@ -417,7 +417,7 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
   
   if (!converge | zero_se) {
     status1 <- "nonconvergence"                  # TODO: Wasn't this already assigned above?
-    ind_fit   <- rep(NA, length(fit_measures))                       # TODO: Edited this and next 2 lines to avoid hardcoding
+    ind_fit   <- rep(NA, length(fit_measures))   # TODO: Edited this and next 2 lines to avoid hardcoding
     ind_coefs <- matrix(NA, nrow = 1, ncol = length(ind_coefs_cols))
     colnames(ind_coefs) <- ind_coefs_cols
     ind_betas     <- NA
@@ -426,7 +426,6 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
     ind_plot_psi  <- NA
     ind_psi       <- NA
     ind_psi_unstd <- NA
-    ind_vcov_full <- NA   # TODO: "ind_vcov" and "ind_vcov_full" are redundant for saturated model
   }
   
   # Wrap up
@@ -440,7 +439,6 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
                   ind_plot_psi  = ind_plot_psi, 
                   ind_psi       = ind_psi, 
                   ind_psi_unstd = ind_psi_unstd, 
-                  ind_vcov_full = ind_vcov_full,
                   syntax        = satur_syntax)
   
   new.obj$testing <- list(dat           = dat,        # TODO: Return additional elements for testing
@@ -473,7 +471,6 @@ fit_check_compile_satur_models <- function(dat_mat_ls, out = NULL, plot = TRUE, 
   coefs     <- vector("list", n_ind)
   betas     <- vector("list", n_ind)
   vcov      <- vector("list", n_ind)
-  vcovfull  <- vector("list", n_ind)
   plots     <- vector("list", n_ind)
   syntax    <- vector("list", n_ind)
   psi       <- vector("list", n_ind)
@@ -494,7 +491,6 @@ fit_check_compile_satur_models <- function(dat_mat_ls, out = NULL, plot = TRUE, 
     coefs[[k]]     <- ind_spec$ind_coefs
     betas[[k]]     <- ind_spec$ind_betas
     vcov[[k]]      <- ind_spec$ind_vcov
-    vcovfull[[k]]  <- ind_spec$ind_vcov_full
     plots[[k]]     <- ind_spec$ind_plot
     plots_cov[[k]] <- ind_spec$ind_plot_psi
     syntax[[k]]    <- ind_spec$syntax
@@ -503,8 +499,8 @@ fit_check_compile_satur_models <- function(dat_mat_ls, out = NULL, plot = TRUE, 
     testing[[k]]   <- ind_spec$testing          # TODO: Return additional elements for testing
   }
   
-  names(status) <- names(fits) <- names(coefs) <-       # TODO: Added names for "plots_cov" and "syntax"
-    names(betas) <- names(vcov) <- names(vcovfull) <- names(plots) <- names(plots_cov) <-
+  names(status) <- names(fits) <- names(coefs) <-       # TODO: JE added names for "plots_cov" and "syntax"
+    names(betas) <- names(vcov) <- names(plots) <- names(plots_cov) <-
     names(syntax) <- names(psi) <- names(psiunstd) <- names(testing) <- names(dat_mat_ls)  # TODO: "testing" for testing
   
   res <- list(status    = status,
@@ -514,7 +510,6 @@ fit_check_compile_satur_models <- function(dat_mat_ls, out = NULL, plot = TRUE, 
               psi       = psi,
               psiunstd  = psiunstd,
               vcov      = vcov,
-              vcovfull  = vcovfull,
               plots     = plots,
               plots_cov = plots_cov,
               syntax    = syntax,

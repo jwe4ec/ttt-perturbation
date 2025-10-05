@@ -76,9 +76,8 @@ all(is.na(ind_fits$pvalue))                            # All have NA for "pvalue
 results_ls$coefs$ts1
 results_ls$betas$ts1
 plot(results_ls$plots$ts1)
-results_ls$vcov$ts1      # TODO: What is this?
-results_ls$vcovfull$ts1  # TODO: Redundant with "ind_vcov" for saturated model
-results_ls$psi$ts1       # TODO: What is this?
+results_ls$vcov$ts1      # TODO: What is this? Maybe diagnostic to see if a cell is 1
+results_ls$psi$ts1       # TODO: What is this? Check lavaan documenation
 results_ls$psiunstd$ts1  # TODO: What is this?
 results_ls$syntax$ts1
 

@@ -469,6 +469,12 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
 fit_check_compile_satur_models <- function(dat_mat_ls, out = NULL, plot = TRUE, satur_syntax) {
   # Note: Simplified for our case
   # - Assuming "agg" and "hybrid" are FALSE
+  #   - TODO: But see here where if "VAR" of "indSEM()" is TRUE then "hybrid" is set to TRUE
+  #     - https://github.com/GatesLab/gimme/blob/93a2f7ad1c8eb0334be6e5bb04dc244ebe501d85/R/indSEM.R
+  
+  
+  
+  
   
   n_ind <- length(dat_mat_ls)    # TODO: Add "n_subj" to "dat"
   

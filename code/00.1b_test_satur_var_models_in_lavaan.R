@@ -82,7 +82,7 @@ results_ls$psiunstd$ts1  # TODO: What is this?
 results_ls$syntax$ts1
 
 # TODO: Investigate psi. GIMME documenation says it's "standardized residual covariance 
-# matrices" (and "unstandardied residual covariance matrices")
+# matrices" (and "unstandardized residual covariance matrices")
 
 lavInspect(results_ls$testing$ts1$fit, "std")$psi        # psi
 lavInspect(results_ls$testing$ts1$fit, "estimates")$psi  # psiunstd

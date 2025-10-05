@@ -40,9 +40,9 @@ create_satur_gimme_paths <- function(dat_mat) {
   
   intercepts_current <- paste0(vars_current, "~1")
   
-  # Specify variances and covariances among lagged variables (diagonal and lower tri)
+  # Specify variances and covariances among lagged variables (diagonal and upper tri)
   
-  idx <- as.data.frame(which(lower.tri(lagged_mat, diag = TRUE), arr.ind = TRUE))
+  idx <- as.data.frame(which(upper.tri(lagged_mat, diag = TRUE), arr.ind = TRUE))
   
   varcov_lagged <- apply(idx, 1, function(x) {
     paste0(vars_lagged[x["row"]], "~~", vars_lagged[x["col"]])
@@ -66,9 +66,9 @@ create_satur_gimme_paths <- function(dat_mat) {
   
   autoreg <- paste(vars_current, vars_lagged, sep = "~")
   
-  # Specify undirected contemporaneous relations among current variables (lower tri; among residuals?)
+  # Specify undirected contemporaneous relations among current variables (upper tri; among residuals?)
   
-  idx <- as.data.frame(which(lower.tri(current_mat), arr.ind = TRUE))
+  idx <- as.data.frame(which(upper.tri(current_mat), arr.ind = TRUE))
   
   cov_current <- apply(idx, 1, function(x) {
     paste0(vars_current[x["row"]], "~~", vars_current[x["col"]])
@@ -323,13 +323,6 @@ fit_check_compile_satur_model_ind <- function(data_file, part_id, out, plot, sat
 
     ind_fit <- c(ind_fit, round(r2, digits = 4))
 
-    # TODO: lavaan changes the lhs/rhs of some covariances in "lavInspect", "parameterEstimates", and
-    # "standardizedSolution" (seems to matter for restricted models--see filtering in original code)
-    
-    
-    
-    
-    
     # TODO: JE edited the following to keep all paths for our case
     
     ind_vcov       <- lavInspect(fit, "vcov.std.all")

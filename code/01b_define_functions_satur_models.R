@@ -203,9 +203,9 @@ fit.model <- function(syntax, data_file) {
 # Define testWeights() for checking TODO from GIMME's "search.paths.ind.R"
 # - https://github.com/GatesLab/gimme/blob/master/R/search.paths.ind.R
 
-# TODO: What does this check exactly?
-# - If any eigenvalues >= 1, system will explode (revisit meaning)
-# - If sum of all paths to a variable leads to value that is > than the value before
+# TODO: What does this check exactly? Revisit meaning of eigenvalues.
+# - If any eigenvalues >= 1, in which case the system will explode (i.e., if sum 
+# of all paths to a variable leads to value that is > than the value before)
 
 # ind_betas example:
 
@@ -214,6 +214,7 @@ fit.model <- function(syntax, data_file) {
 # V1 0.3897  0.0864  0.1061  0  0  0
 # V2 0.3847  0.5795 -0.0587  0  0  0
 # V3 0.1676 -0.0577  0.8567  0  0  0
+
 
 
 
@@ -231,6 +232,18 @@ testWeights <- function(fit, dat) {
   test <- any(Re(eigen(ind_betas[, 1:dat$n_endog])$values) >= 1) |  # TODO: "n_endog" is number of original variables
     any(Re(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values) >= 1)
   
+  # TODO: Remove the following used for testing
+  
+  # print(ind_betas)
+  # print(ind_betas[, 1:dat$n_endog])
+  # print(eigen(ind_betas[, 1:dat$n_endog])$values)
+  # print(Re(eigen(ind_betas[, 1:dat$n_endog])$values))
+  # 
+  # print("Next part:")
+  # print(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])
+  # print(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values)
+  # print(Re(eigen(ind_betas[, (dat$n_endog + 1):(dat$n_endog * 2)])$values))
+
   return(test)
 }
 
